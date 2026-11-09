@@ -1,0 +1,228 @@
+<div class="container-wide" style="padding-top: 16px; padding-bottom: 32px;">
+  <!-- Action Bar (Hidden on print) -->
+  <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 12px 20px; background: #FFFFFF; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+    <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">
+      Printable Customer Report &bull; A4 Optimized
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <button onclick="window.print()" class="btn btn-primary">
+        🖨️ Print Report
+      </button>
+      <button onclick="window.history.back()" class="btn btn-secondary">
+        Back
+      </button>
+    </div>
+  </div>
+
+  <!-- Printable A4 Document Content -->
+  <div class="card print-page" style="padding: 32px;">
+    <!-- Report Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--border); padding-bottom: 20px; margin-bottom: 24px;">
+      <div>
+        <h1 style="margin: 0 0 6px 0; font-size: 26px; color: var(--text-main); font-weight: 700;">
+          <%= contact.firstName %> <%= contact.lastName %>
+        </h1>
+        <div style="font-size: 14px; color: var(--text-muted);">
+          <%= contact.jobTitle || 'No Title' %> <%= contact.company ? `• ${contact.company.name}` : '' %>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <% const stageClass = contact.lifecycleStage.toLowerCase(); %>
+        <span class="badge badge-<%= stageClass %>" style="font-size: 13px; padding: 4px 12px;">
+          <%= contact.lifecycleStage %>
+        </span>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+          Generated <%= new Date().toLocaleDateString('en-US', { dateStyle: 'medium' }) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact & Company Profile Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+      <!-- Contact Info -->
+      <div class="print-card">
+        <h3 style="margin: 0 0 12px 0; font-size: 15px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;">
+          Contact Information
+        </h3>
+        <table style="width: 100%; font-size: 13px; line-height: 1.8;">
+          <tr>
+            <td style="color: var(--text-muted); width: 35%;">Email:</td>
+            <td style="font-weight: 500;"><%= contact.email || '—' %></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);">Phone:</td>
+            <td style="font-weight: 500;"><%= contact.phone || '—' %></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);">Location:</td>
+            <td style="font-weight: 500;">
+              <%= [contact.city, contact.state, contact.country].filter(Boolean).join(', ') || '—' %>
+            </td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);">Account Owner:</td>
+            <td style="font-weight: 500;"><%= contact.owner ? contact.owner.name : 'Unassigned' %></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);">Lead Source:</td>
+            <td style="font-weight: 500;"><%= contact.source ? contact.source.name : '—' %></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted);">Last Contacted:</td>
+            <td style="font-weight: 500;">
+              <%= contact.lastContactedAt ? new Date(contact.lastContactedAt).toLocaleDateString('en-US', { dateStyle: 'medium' }) : 'Never' %>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Company Info -->
+      <div class="print-card">
+        <h3 style="margin: 0 0 12px 0; font-size: 15px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;">
+          Company Details
+        </h3>
+        <% if (contact.company) { %>
+          <table style="width: 100%; font-size: 13px; line-height: 1.8;">
+            <tr>
+              <td style="color: var(--text-muted); width: 35%;">Company Name:</td>
+              <td style="font-weight: 500;"><%= contact.company.name %></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-muted);">Domain:</td>
+              <td style="font-weight: 500;"><%= contact.company.domain || '—' %></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-muted);">Industry:</td>
+              <td style="font-weight: 500;"><%= contact.company.industry || '—' %></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-muted);">Company Size:</td>
+              <td style="font-weight: 500;"><%= contact.company.size || '—' %></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-muted);">Company Phone:</td>
+              <td style="font-weight: 500;"><%= contact.company.phone || '—' %></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-muted);">Address:</td>
+              <td style="font-weight: 500;">
+                <%= [contact.company.addressLine1, contact.company.city, contact.company.state, contact.company.country].filter(Boolean).join(', ') || '—' %>
+              </td>
+            </tr>
+          </table>
+        <% } else { %>
+          <p style="color: var(--text-muted); font-size: 13px; font-style: italic; margin-top: 12px;">No company linked to this contact.</p>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Active Open Leads -->
+    <div style="margin-bottom: 28px;">
+      <h3 style="margin: 0 0 10px 0; font-size: 16px; color: var(--text-main); border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+        Open Deals & Opportunities (<%= openLeads.length %>)
+      </h3>
+      <% if (openLeads.length === 0) { %>
+        <p style="color: var(--text-muted); font-size: 13px; font-style: italic;">No open pipeline leads for this contact.</p>
+      <% } else { %>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Deal Title</th>
+              <th>Pipeline Stage</th>
+              <th>Probability</th>
+              <th>Value</th>
+              <th>Expected Close</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% openLeads.forEach(function(lead) { %>
+              <tr>
+                <td style="font-weight: 600;"><%= lead.title %></td>
+                <td>
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: <%= lead.stage ? lead.stage.color : '#94A3B8' %>; margin-right: 6px;"></span>
+                  <%= lead.stage ? lead.stage.name : 'Unknown' %>
+                </td>
+                <td><%= lead.stage ? lead.stage.probability : 0 %>%</td>
+                <td style="font-weight: 600;"><%= lead.currency %> <%= (lead.value || 0).toLocaleString() %></td>
+                <td>
+                  <%= lead.expectedCloseDate ? new Date(lead.expectedCloseDate).toLocaleDateString('en-US', { dateStyle: 'medium' }) : '—' %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- Upcoming Follow-Ups -->
+    <div style="margin-bottom: 28px;">
+      <h3 style="margin: 0 0 10px 0; font-size: 16px; color: var(--text-main); border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+        Upcoming Follow-ups (<%= upcomingFollowUps.length %>)
+      </h3>
+      <% if (upcomingFollowUps.length === 0) { %>
+        <p style="color: var(--text-muted); font-size: 13px; font-style: italic;">No upcoming follow-up tasks scheduled.</p>
+      <% } else { %>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Due Date</th>
+              <th>Priority</th>
+              <th>Assignee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% upcomingFollowUps.forEach(function(item) { %>
+              <tr>
+                <td style="font-weight: 500;"><%= item.title %></td>
+                <td><%= new Date(item.dueAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                <td>
+                  <span class="badge badge-<%= item.priority.toLowerCase() %>"><%= item.priority %></span>
+                </td>
+                <td><%= item.assignee ? item.assignee.name : 'Unassigned' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- Recent Activities Timeline -->
+    <div>
+      <h3 style="margin: 0 0 10px 0; font-size: 16px; color: var(--text-main); border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+        Recent Activity History (Last <%= activities.length %>)
+      </h3>
+      <% if (activities.length === 0) { %>
+        <p style="color: var(--text-muted); font-size: 13px; font-style: italic;">No activities logged yet.</p>
+      <% } else { %>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">Type</th>
+              <th style="width: 25%;">Date / Time</th>
+              <th style="width: 35%;">Subject / Summary</th>
+              <th style="width: 25%;">Logged By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% activities.forEach(function(act) { %>
+              <tr>
+                <td>
+                  <span class="badge badge-low"><%= act.type %></span>
+                </td>
+                <td style="color: var(--text-muted);"><%= new Date(act.occurredAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                <td>
+                  <strong><%= act.subject %></strong>
+                  <% if (act.body) { %>
+                    <div style="font-size: 12px; color: var(--text-body); margin-top: 2px;"><%= act.body %></div>
+                  <% } %>
+                </td>
+                <td><%= act.createdBy ? act.createdBy.name : 'System' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>

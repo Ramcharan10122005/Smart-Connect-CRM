@@ -1,30 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Us - SmartConnect CRM</title>
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-<body class="public-lead-form">
-  <div class="form-card">
-    <h2>Get in Touch</h2>
-    <form action="/api/v1/public/leads" method="POST">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="name" required />
+<div class="container" style="padding-top: 16px; padding-bottom: 32px;">
+  <div class="card">
+    <div class="card-header" style="text-align: center;">
+      <h1 class="card-title"><%= form.name %></h1>
+      <p class="card-subtitle">Fill out the form below and our team will be in touch shortly.</p>
+    </div>
+
+    <% if (typeof globalError !== 'undefined' && globalError) { %>
+      <div style="background-color: var(--danger-light); color: var(--danger); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 14px; font-weight: 500;">
+        <%= globalError %>
       </div>
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required />
+    <% } %>
+
+    <form action="/capture/<%= form.key %><%= typeof isEmbed !== 'undefined' && isEmbed ? '?embed=true' : '' %>" method="POST" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      
+      <!-- Honeypot Field (invisible to normal users, traps automated bots) -->
+      <div style="display: none !important;" aria-hidden="true">
+        <label for="website_hp">Do not fill this out</label>
+        <input type="text" id="website_hp" name="website_hp" tabindex="-1" autocomplete="off" />
       </div>
-      <div class="form-group">
-        <label for="message">Message</label>
-        <textarea id="message" name="message" rows="4"></textarea>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="name">
+            Full Name <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            class="form-control <%= errors && errors.name ? 'is-invalid' : '' %>"
+            placeholder="Jane Doe"
+            value="<%= values && values.name ? values.name : '' %>"
+            required
+          />
+          <% if (errors && errors.name) { %>
+            <div class="invalid-feedback"><%= errors.name %></div>
+          <% } %>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">
+            Email Address <span class="required">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="form-control <%= errors && errors.email ? 'is-invalid' : '' %>"
+            placeholder="jane@company.com"
+            value="<%= values && values.email ? values.email : '' %>"
+            required
+          />
+          <% if (errors && errors.email) { %>
+            <div class="invalid-feedback"><%= errors.email %></div>
+          <% } %>
+        </div>
       </div>
-      <button type="submit">Submit Inquiry</button>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            class="form-control <%= errors && errors.phone ? 'is-invalid' : '' %>"
+            placeholder="+1 (555) 019-2834"
+            value="<%= values && values.phone ? values.phone : '' %>"
+          />
+          <% if (errors && errors.phone) { %>
+            <div class="invalid-feedback"><%= errors.phone %></div>
+          <% } %>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="company">Company / Organization</label>
+          <input
+            type="text"
+            id="company"
+            name="company"
+            class="form-control <%= errors && errors.company ? 'is-invalid' : '' %>"
+            placeholder="Acme Corp"
+            value="<%= values && values.company ? values.company : '' %>"
+          />
+          <% if (errors && errors.company) { %>
+            <div class="invalid-feedback"><%= errors.company %></div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="message">How can we help you?</label>
+        <textarea
+          id="message"
+          name="message"
+          rows="4"
+          class="form-control <%= errors && errors.message ? 'is-invalid' : '' %>"
+          placeholder="Tell us about your project, timeline, or requirements..."
+        ><%= values && values.message ? values.message : '' %></textarea>
+        <% if (errors && errors.message) { %>
+          <div class="invalid-feedback"><%= errors.message %></div>
+        <% } %>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <button type="submit" class="btn btn-primary btn-block">
+          Submit Message
+        </button>
+      </div>
+
+      <div style="margin-top: 16px; text-align: center; font-size: 12px; color: var(--text-muted);">
+        🔒 Your privacy is protected. We will never share or sell your details.
+      </div>
     </form>
   </div>
-</body>
-</html>
-
+</div>

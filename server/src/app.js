@@ -9,7 +9,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import env from './config/env.js';
+import expressLayouts from 'express-ejs-layouts';
 import apiRouter from './routes/index.js';
+import publicRoutes from './routes/public.routes.js';
+import printRoutes from './routes/print.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { ApiError } from './utils/ApiError.js';
 
@@ -69,16 +72,28 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.use(expressLayouts);
+app.set('layout', 'layouts/main');
 
-// 8. API v1 Router Mount
+// 8. Public Web Pages & Print Views
+app.use('/capture', publicRoutes);
+app.use('/print', printRoutes);
+
+// 9. API v1 Router Mount
 app.use('/api/v1', apiRouter);
 
-// 9. 404 Handler for Unhandled Routes
+// 10. 404 Handler for Unhandled Routes
 app.use((req, res, next) => {
-  next(ApiError.notFound(`Route ${req.method} ${req.originalUrl} not found`));
+  if (req.originalUrl.startsWith('/api')) {
+    return next(ApiError.notFound(`Route ${req.method} ${req.originalUrl} not found`));
+  }
+  return res.status(404).render('errors/404', {
+    title: 'Page Not Found - SmartConnect CRM',
+    message: `The page at ${req.originalUrl} could not be found.`,
+  });
 });
 
-// 10. Centralized Error Handler
+// 11. Centralized Error Handler
 app.use(errorHandler);
 
 export default app;

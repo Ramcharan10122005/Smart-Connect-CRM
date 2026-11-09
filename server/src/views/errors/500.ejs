@@ -1,0 +1,12 @@
+<div class="container" style="text-align: center; padding: 48px 16px;">
+  <div class="card" style="padding: 48px 32px;">
+    <div style="font-size: 64px; font-weight: 800; color: var(--danger); margin-bottom: 8px;">500</div>
+    <h1 class="card-title" style="font-size: 26px;">Server Error</h1>
+    <p class="card-subtitle" style="margin: 12px 0 28px 0; font-size: 15px; color: var(--text-body);">
+      <%= typeof message !== 'undefined' ? message : "We encountered an unexpected error processing your request. Please try again shortly." %>
+    </p>
+    <div>
+      <a href="/" class="btn btn-primary">Return to Homepage</a>
+    </div>
+  </div>
+</div>

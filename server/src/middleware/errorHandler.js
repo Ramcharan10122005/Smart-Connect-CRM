@@ -5,6 +5,17 @@ import { errorResponse } from '../utils/response.js';
 import { logger } from '../utils/logger.js';
 
 export function errorHandler(err, req, res, _next) {
+  // Non-API routes render EJS error pages (404 and 500)
+  if (req.originalUrl && !req.originalUrl.startsWith('/api')) {
+    const status = err instanceof ApiError ? err.statusCode : 500;
+    const viewName = status === 404 ? 'errors/404' : 'errors/500';
+    logger.error({ err, path: req.originalUrl, status }, 'Non-API error encountered');
+    return res.status(status).render(viewName, {
+      title: `${status === 404 ? 'Page Not Found' : 'Server Error'} - SmartConnect CRM`,
+      message: err.message || 'An unexpected error occurred.',
+    });
+  }
+
   // 1. Handled Operational ApiErrors
   if (err instanceof ApiError) {
     if (err.statusCode >= 500) {
