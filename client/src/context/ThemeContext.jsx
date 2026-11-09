@@ -1,28 +1,23 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
+import { useUiStore } from '@/stores/uiStore';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('smartconnect_theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const theme = useUiStore((state) => state.theme);
+  const setTheme = useUiStore((state) => state.setTheme);
+  const toggleTheme = useUiStore((state) => state.toggleTheme);
 
   useEffect(() => {
+    // Ensure document element has proper class on mount
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('smartconnect_theme', theme);
   }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
@@ -34,7 +29,12 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    const store = useUiStore.getState();
+    return {
+      theme: store.theme,
+      setTheme: store.setTheme,
+      toggleTheme: store.toggleTheme,
+    };
   }
   return context;
 }

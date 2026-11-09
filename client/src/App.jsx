@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
+import { queryClient } from './lib/queryClient.js';
 import { api } from './lib/api.js';
-import { useTheme } from './context/ThemeContext.jsx';
-import { CheckCircle2, AlertCircle, Loader2, Moon, Sun, Layers } from 'lucide-react';
+import { useUiStore } from './stores/uiStore.js';
+import { CheckCircle2, AlertCircle, Loader2, Moon, Sun, Layers, Palette } from 'lucide-react';
+import DesignSystemPage from './pages/DesignSystemPage.jsx';
 
-export default function App() {
+function HomePage() {
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useUiStore();
 
   useEffect(() => {
     let isMounted = true;
@@ -33,8 +38,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 selection:bg-indigo-500 selection:text-white">
-      {/* Top right theme toggle */}
-      <div className="fixed top-6 right-6">
+      {/* Top right controls */}
+      <div className="fixed top-6 right-6 flex items-center gap-2">
+        <Link
+          to="/design"
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-crm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-subtle hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors"
+        >
+          <Palette className="w-3.5 h-3.5" />
+          <span>Design System</span>
+        </Link>
         <button
           onClick={toggleTheme}
           aria-label="Toggle Theme"
@@ -102,5 +114,22 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  const theme = useUiStore((state) => state.theme);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/design" element={<DesignSystemPage />} />
+          <Route path="*" element={<HomePage />} />
+        </Routes>
+        <Toaster richColors closeButton position="top-right" theme={theme} />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }

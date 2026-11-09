@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%; /* #F8FAFC (Slate 50) */
+    --foreground: 222.2 84% 4.9%; /* #020817 (Slate 950) */
+
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 243.4 75.4% 58.6%; /* #4F46E5 (Indigo 600 - Brand Primary) */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%; /* #F1F5F9 (Slate 100) */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%; /* #64748B (Slate 500) */
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%; /* #EF4444 (Red 500) */
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142.1 76.2% 36.3%; /* #16A34A (Green 600) */
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%; /* #F59E0B (Amber 500) */
+    --warning-foreground: 222.2 47.4% 11.2%;
+
+    --border: 214.3 31.8% 91.4%; /* #E2E8F0 (Slate 200) */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243.4 75.4% 58.6%; /* #4F46E5 */
+
+    --radius: 10px; /* 10px corner radius from PROJECT_CONTEXT.md */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%; /* #020817 (Slate 950) */
+    --foreground: 210 40% 98%; /* #F8FAFC (Slate 50) */
+
+    --card: 222.2 47.4% 11.2%; /* #0F172A (Slate 900) */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 238.7 83.5% 66.7%; /* #6366F1 (Indigo 500) */
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%; /* #1E293B (Slate 800) */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%; /* #94A3B8 (Slate 400) */
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%; /* #1E293B (Slate 800) */
+    --input: 217.2 32.6% 17.5%;
+    --ring: 238.7 83.5% 66.7%; /* #6366F1 */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
