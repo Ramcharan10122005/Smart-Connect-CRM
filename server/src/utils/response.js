@@ -29,3 +29,8 @@ export function errorResponse(
     meta: {},
   });
 }
+
+export default {
+  successResponse,
+  errorResponse,
+};

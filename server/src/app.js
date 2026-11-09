@@ -2,58 +2,83 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import compression from 'compression';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import healthRoutes from './routes/health.routes.js';
+import env from './config/env.js';
+import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { errorResponse } from './utils/response.js';
+import { ApiError } from './utils/ApiError.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Security & utility middleware
+// 1. Security Headers
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Allows inline scripts in EJS development if needed
+    contentSecurityPolicy: false,
   })
 );
 
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+// 2. CORS
 app.use(
   cors({
-    origin: clientUrl,
+    origin: env.CLIENT_URL,
     credentials: true,
   })
 );
 
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 3. HTTP Compression
+app.use(compression());
 
-if (process.env.NODE_ENV !== 'test') {
+// 4. Request Logging (dev only)
+if (env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Static assets for EJS views
-app.use(express.static(path.join(__dirname, '../public')));
+// 5. Global Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: env.NODE_ENV === 'test' ? 10000 : 1000, // 1000 requests per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    data: null,
+    error: {
+      message: 'Too many requests from this IP, please try again later',
+      code: 'RATE_LIMIT_EXCEEDED',
+      details: null,
+    },
+    meta: {},
+  },
+});
+app.use('/api/', globalLimiter);
 
-// EJS View Engine setup
+// 6. Body Parsers & Cookie Parser
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(cookieParser());
+
+// 7. Static Assets & EJS View Engine
+app.use(express.static(path.join(__dirname, '../public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// API v1 routes
-app.use('/api/v1', healthRoutes);
+// 8. API v1 Router Mount
+app.use('/api/v1', apiRouter);
 
-// Fallback 404 for unhandled API routes
-app.use('/api/*', (req, res) => {
-  return errorResponse(res, `Route ${req.originalUrl} not found`, 'NOT_FOUND', null, 404);
+// 9. 404 Handler for Unhandled Routes
+app.use((req, res, next) => {
+  next(ApiError.notFound(`Route ${req.method} ${req.originalUrl} not found`));
 });
 
-// Central error handler
+// 10. Centralized Error Handler
 app.use(errorHandler);
 
 export default app;

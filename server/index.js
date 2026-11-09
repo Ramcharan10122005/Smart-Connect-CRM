@@ -1,31 +1,32 @@
-import 'dotenv/config';
+import env from './src/config/env.js';
 import app from './src/app.js';
+import { logger } from './src/utils/logger.js';
 
-let PORT = parseInt(process.env.PORT, 10) || 5001;
+let PORT = env.PORT;
 
 function startServer(port) {
   const server = app.listen(port, () => {
-    console.log(
-      `[SmartConnect Server] running on http://localhost:${port} in ${process.env.NODE_ENV || 'development'} mode`
+    logger.info(
+      `[SmartConnect Server] running on http://localhost:${port} in ${env.NODE_ENV} mode`
     );
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(
-        `[SmartConnect Server] Port ${port} is in use (often macOS AirPlay on 5000). Retrying on port ${port + 1}...`
+      logger.warn(
+        `[SmartConnect Server] Port ${port} is in use (e.g. macOS AirPlay). Retrying on port ${port + 1}...`
       );
       startServer(port + 1);
     } else {
-      console.error('[SmartConnect Server] Fatal error:', err);
+      logger.error({ err }, '[SmartConnect Server] Fatal server startup error');
       process.exit(1);
     }
   });
 
   const gracefulShutdown = (signal) => {
-    console.log(`Received ${signal}. Shutting down gracefully...`);
+    logger.info(`Received ${signal}. Shutting down gracefully...`);
     server.close(() => {
-      console.log('HTTP server closed.');
+      logger.info('HTTP server closed.');
       process.exit(0);
     });
   };

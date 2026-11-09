@@ -166,7 +166,16 @@ async function main() {
   // 5. SEED 25 COMPANIES
   // -----------------------------------------------------------------
   console.log('[Seed] Seeding 25 companies...');
-  const industries = ['SaaS', 'Healthcare', 'Fintech', 'Ecommerce', 'Logistics', 'Marketing', 'Consulting', 'Real Estate'];
+  const industries = [
+    'SaaS',
+    'Healthcare',
+    'Fintech',
+    'Ecommerce',
+    'Logistics',
+    'Marketing',
+    'Consulting',
+    'Real Estate',
+  ];
   const sizes = ['1-10', '11-50', '51-200', '201-500', '500+'];
 
   const companies = [];
@@ -270,7 +279,13 @@ async function main() {
   // -----------------------------------------------------------------
   console.log('[Seed] Seeding 50 leads across pipeline stages...');
   const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-  const lostReasons = ['Competitor chosen', 'Budget constraints', 'Timing not right', 'Ghosted after demo', 'Internal reorganization'];
+  const lostReasons = [
+    'Competitor chosen',
+    'Budget constraints',
+    'Timing not right',
+    'Ghosted after demo',
+    'Internal reorganization',
+  ];
 
   const leads = [];
   for (let i = 0; i < 50; i++) {
@@ -353,7 +368,9 @@ async function main() {
           fromStageId: stageNew.id,
           toStageId: stage.id,
           changedById: owner.id,
-          changedAt: new Date(lead.createdAt.getTime() + 86400 * 1000 * faker.number.int({ min: 2, max: 15 })),
+          changedAt: new Date(
+            lead.createdAt.getTime() + 86400 * 1000 * faker.number.int({ min: 2, max: 15 })
+          ),
         },
       });
     }
@@ -366,8 +383,19 @@ async function main() {
   // -----------------------------------------------------------------
   console.log('[Seed] Seeding 200 activities across the last 90 days...');
   const activityTypes = ['CALL', 'EMAIL', 'MEETING', 'NOTE', 'SYSTEM'];
-  const callOutcomes = ['Connected - Interested', 'Left Voicemail', 'Gatekeeper Blocked', 'Wrong Number', 'Callback Scheduled'];
-  const meetingOutcomes = ['Demo Completed - Highly Engaged', 'Rescheduled by Prospect', 'Scope Discussed', 'Pricing Presented'];
+  const callOutcomes = [
+    'Connected - Interested',
+    'Left Voicemail',
+    'Gatekeeper Blocked',
+    'Wrong Number',
+    'Callback Scheduled',
+  ];
+  const meetingOutcomes = [
+    'Demo Completed - Highly Engaged',
+    'Rescheduled by Prospect',
+    'Scope Discussed',
+    'Pricing Presented',
+  ];
 
   for (let i = 0; i < 200; i++) {
     const type = faker.helpers.arrayElement(activityTypes);
@@ -470,7 +498,12 @@ async function main() {
     const assignee = faker.helpers.arrayElement(reps);
     const contact = faker.helpers.arrayElement(contacts);
     const todayDue = new Date();
-    todayDue.setHours(faker.number.int({ min: 9, max: 18 }), faker.number.int({ min: 0, max: 59 }), 0, 0);
+    todayDue.setHours(
+      faker.number.int({ min: 9, max: 18 }),
+      faker.number.int({ min: 0, max: 59 }),
+      0,
+      0
+    );
 
     await prisma.followUp.create({
       data: {
@@ -548,7 +581,10 @@ async function main() {
   for (let i = 0; i < 4; i++) {
     const assignee = faker.helpers.arrayElement(reps);
     const contact = faker.helpers.arrayElement(contacts);
-    const snoozedUntil = faker.date.soon({ days: 7, refDate: new Date(Date.now() + 86400 * 1000 * 2) });
+    const snoozedUntil = faker.date.soon({
+      days: 7,
+      refDate: new Date(Date.now() + 86400 * 1000 * 2),
+    });
 
     await prisma.followUp.create({
       data: {
