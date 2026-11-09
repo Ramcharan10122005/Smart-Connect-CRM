@@ -8,6 +8,8 @@ import contactRoutes from './contact.routes.js';
 import pipelineStageRoutes from './pipelineStage.routes.js';
 import leadSourceRoutes from './leadSource.routes.js';
 import leadRoutes from './lead.routes.js';
+import activityRoutes from './activity.routes.js';
+import followUpRoutes from './followUp.routes.js';
 
 const router = Router();
 
@@ -23,5 +25,7 @@ router.use('/contacts', contactRoutes);
 router.use('/pipeline-stages', pipelineStageRoutes);
 router.use('/lead-sources', leadSourceRoutes);
 router.use('/leads', leadRoutes);
+router.use('/activities', activityRoutes);
+router.use('/follow-ups', followUpRoutes);
 
 export default router;
