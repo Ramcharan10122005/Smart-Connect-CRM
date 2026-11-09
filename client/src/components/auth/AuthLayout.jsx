@@ -1,0 +1,141 @@
+import { Link } from 'react-router-dom';
+import { Layers, TrendingUp, Calendar, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { useUIStore } from '@/stores/uiStore';
+
+export function AuthLayout({ title, subtitle, children, footer }) {
+  const { theme, toggleTheme } = useUIStore();
+
+  return (
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-background">
+      {/* Top right theme toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="flex h-9 w-9 items-center justify-center rounded-crm border border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-subtle"
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4 text-amber-400" />
+          ) : (
+            <Moon className="h-4 w-4 text-slate-700" />
+          )}
+        </button>
+      </div>
+
+      {/* Left Form Container */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-14 max-w-xl mx-auto md:max-w-none md:w-1/2 lg:w-[48%] overflow-y-auto">
+        {/* Brand header */}
+        <div className="flex items-center gap-3 mb-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-crm bg-primary text-primary-foreground shadow-subtle">
+              <Layers className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="font-bold text-base tracking-tight text-foreground block">
+                SmartConnect
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono -mt-1 block">
+                RELATIONSHIP CRM
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Center Form Section */}
+        <div className="my-auto w-full max-w-sm mx-auto space-y-6">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+            {subtitle && (
+              <p className="text-sm text-muted-foreground leading-relaxed">{subtitle}</p>
+            )}
+          </div>
+
+          {children}
+
+          {footer && <div className="pt-2 text-center text-xs text-muted-foreground">{footer}</div>}
+        </div>
+
+        {/* Bottom subtle copyright */}
+        <div className="mt-8 text-xs text-muted-foreground/60 text-center md:text-left">
+          &copy; {new Date().getFullYear()} SmartConnect CRM. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Brand Panel (hidden on mobile, stacked or side-by-side) */}
+      <div className="hidden md:flex flex-1 flex-col justify-between p-10 lg:p-14 bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 text-white relative overflow-hidden">
+        {/* Subtle decorative glow effects */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-indigo-400/20 blur-3xl pointer-events-none" />
+
+        {/* Top badge */}
+        <div className="relative z-10 flex items-center gap-2">
+          <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-medium tracking-wide backdrop-blur-sm border border-white/10">
+            Intelligent Pipeline & Relationship Engine
+          </span>
+        </div>
+
+        {/* Center Value Statement */}
+        <div className="relative z-10 max-w-lg space-y-6 my-auto py-12">
+          <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-white">
+            Close deals faster with unified customer intelligence.
+          </h2>
+          <p className="text-sm lg:text-base text-indigo-100/90 leading-relaxed">
+            SmartConnect gives your revenue team total pipeline transparency, automated task
+            cadence, and proactive reminders so high-value opportunities never fall through the
+            cracks.
+          </p>
+
+          {/* 3 Feature Highlights */}
+          <div className="space-y-4 pt-4">
+            <div className="flex items-start gap-3.5 bg-white/5 border border-white/10 rounded-crm p-3.5 backdrop-blur-sm">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-semibold text-sm text-white">Kanban Pipeline & Lead Scoring</h3>
+                <p className="text-xs text-indigo-100/80">
+                  Visual stage transitions, dynamic lead scoring, and automated win/loss metrics.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5 bg-white/5 border border-white/10 rounded-crm p-3.5 backdrop-blur-sm">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-semibold text-sm text-white">Unified Activity Timeline</h3>
+                <p className="text-xs text-indigo-100/80">
+                  Centralized history of all calls, emails, meetings, and notes linked to contacts
+                  and companies.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5 bg-white/5 border border-white/10 rounded-crm p-3.5 backdrop-blur-sm">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-semibold text-sm text-white">Automated Cadence & Briefings</h3>
+                <p className="text-xs text-indigo-100/80">
+                  Recurring follow-ups with snooze presets and 08:00 AM daily executive email
+                  digests.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Social Proof / Trust */}
+        <div className="relative z-10 pt-4 border-t border-white/15 text-xs text-indigo-200/80 flex items-center justify-between">
+          <span>Enterprise Role-Based Security</span>
+          <span>Bcrypt 12 • HttpOnly JWT Session</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AuthLayout;

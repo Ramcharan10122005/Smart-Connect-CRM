@@ -16,6 +16,7 @@ const LoginPage = lazy(() => import('./pages/auth/LoginPage.jsx'));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage.jsx'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage.jsx'));
 const SetupPage = lazy(() => import('./pages/auth/SetupPage.jsx'));
+const AcceptInvitePage = lazy(() => import('./pages/auth/AcceptInvitePage.jsx'));
 
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage.jsx'));
 const CustomersPage = lazy(() => import('./pages/customers/CustomersPage.jsx'));
@@ -79,6 +80,14 @@ export default function App() {
             element={
               <SuspenseWrapper>
                 <SetupPage />
+              </SuspenseWrapper>
+            }
+          />
+          <Route
+            path="/accept-invite/:token"
+            element={
+              <SuspenseWrapper>
+                <AcceptInvitePage />
               </SuspenseWrapper>
             }
           />

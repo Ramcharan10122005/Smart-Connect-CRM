@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../lib/api.js';
+import { queryClient } from '../lib/queryClient.js';
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -59,6 +60,7 @@ export const useAuthStore = create((set, get) => ({
     } catch {
       // Ignore network errors on logout
     } finally {
+      queryClient.clear();
       set({
         user: null,
         role: null,

@@ -32,6 +32,11 @@ export const changePasswordSchema = z.object({
   newPassword: strongPasswordSchema,
 });
 
+export const acceptInviteSchema = z.object({
+  token: z.string().min(1, 'Invitation token is required'),
+  password: strongPasswordSchema,
+});
+
 export default {
   strongPasswordSchema,
   setupSchema,
@@ -39,4 +44,5 @@ export default {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  acceptInviteSchema,
 };

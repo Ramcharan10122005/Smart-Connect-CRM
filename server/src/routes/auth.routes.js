@@ -10,12 +10,19 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  acceptInviteSchema,
 } from '../validators/auth.validator.js';
 
 const router = Router();
 
-// Public first-run setup
+// Public first-run setup & status
+router.get('/setup-status', asyncHandler(authController.getSetupStatus));
 router.post('/setup', validate({ body: setupSchema }), asyncHandler(authController.setup));
+router.post(
+  '/accept-invite',
+  validate({ body: acceptInviteSchema }),
+  asyncHandler(authController.acceptInvite)
+);
 
 // Authentication session management (rate-limited)
 router.post(

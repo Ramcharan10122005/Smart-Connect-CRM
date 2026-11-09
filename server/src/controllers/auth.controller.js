@@ -16,6 +16,17 @@ export async function setup(req, res) {
   return successResponse(res, { user, token }, {}, 201);
 }
 
+export async function getSetupStatus(req, res) {
+  const status = await authService.getSetupStatus();
+  return successResponse(res, status);
+}
+
+export async function acceptInvite(req, res) {
+  const { user, token } = await authService.acceptInvite(req.body);
+  res.cookie('token', token, COOKIE_OPTIONS);
+  return successResponse(res, { user, token });
+}
+
 export async function login(req, res) {
   const ipAddress = req.ip || req.connection?.remoteAddress;
   const userAgent = req.headers['user-agent'];

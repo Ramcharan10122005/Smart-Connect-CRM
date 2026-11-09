@@ -201,10 +201,68 @@ export async function changePassword({ userId, currentPassword, newPassword }) {
   return { message: 'Password changed successfully' };
 }
 
+export async function getSetupStatus() {
+  const count = await prisma.user.count();
+  return {
+    setupRequired: count === 0,
+    userCount: count,
+  };
+}
+
+export async function acceptInvite({ token, password }) {
+  const tokenHash = hashToken(token);
+
+  const user = await prisma.user.findFirst({
+    where: {
+      inviteToken: tokenHash,
+      inviteExpiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!user) {
+    throw ApiError.badRequest('Invalid or expired invitation token');
+  }
+
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      inviteToken: null,
+      inviteExpiresAt: null,
+      isActive: true,
+      lastLoginAt: new Date(),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      avatarUrl: true,
+      notificationPreferences: true,
+    },
+  });
+
+  await createAuditLog({
+    userId: user.id,
+    action: 'INVITATION_ACCEPTED',
+    entity: 'User',
+    entityId: user.id,
+    meta: { email: user.email },
+  });
+
+  const jwt = generateJwt({ userId: updatedUser.id, role: updatedUser.role });
+  return { user: updatedUser, token: jwt };
+}
+
 export default {
   setupFirstAdmin,
+  getSetupStatus,
   login,
   forgotPassword,
   resetPassword,
   changePassword,
+  acceptInvite,
 };

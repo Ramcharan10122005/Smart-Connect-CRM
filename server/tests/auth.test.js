@@ -21,6 +21,24 @@ describe('Authentication & Role-Based Access Control', () => {
     assert.strictEqual(res.body.error.code, 'BAD_REQUEST');
   });
 
+  it('GET /api/v1/auth/setup-status should return setupRequired false when users exist', async () => {
+    const res = await request(app).get('/api/v1/auth/setup-status');
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.success, true);
+    assert.strictEqual(res.body.data.setupRequired, false);
+    assert.ok(typeof res.body.data.userCount === 'number');
+  });
+
+  it('POST /api/v1/auth/accept-invite should reject invalid or expired invite tokens with 400', async () => {
+    const res = await request(app).post('/api/v1/auth/accept-invite').send({
+      token: 'invalid-non-existent-token',
+      password: 'NewStrongPass123',
+    });
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.body.success, false);
+    assert.strictEqual(res.body.error.code, 'BAD_REQUEST');
+  });
+
   it('POST /api/v1/auth/login should fail with 401 when given wrong password', async () => {
     const res = await request(app).post('/api/v1/auth/login').send({
       email: 'admin@smartconnect.com',
