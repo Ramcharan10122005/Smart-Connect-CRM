@@ -1,7 +1,6 @@
 import { errorResponse } from '../utils/response.js';
 
-export function errorHandler(err, req, res, next) {
-  // eslint-disable-line no-unused-vars
+export function errorHandler(err, req, res, _next) {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'An unexpected error occurred';
   const code = err.code || 'INTERNAL_ERROR';

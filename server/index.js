@@ -12,7 +12,9 @@ function startServer(port) {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(`[SmartConnect Server] Port ${port} is in use (often macOS AirPlay on 5000). Retrying on port ${port + 1}...`);
+      console.warn(
+        `[SmartConnect Server] Port ${port} is in use (often macOS AirPlay on 5000). Retrying on port ${port + 1}...`
+      );
       startServer(port + 1);
     } else {
       console.error('[SmartConnect Server] Fatal error:', err);
