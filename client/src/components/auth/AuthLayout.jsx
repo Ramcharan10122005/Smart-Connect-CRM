@@ -8,17 +8,18 @@ export function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-background text-foreground transition-colors duration-150">
       {/* Top right theme toggle */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-4 right-4 z-30">
         <button
           type="button"
           onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="flex h-9 w-9 items-center justify-center rounded-crm border border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-subtle"
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="flex h-10 w-10 items-center justify-center rounded-crm bg-white dark:bg-slate-900 text-slate-800 dark:text-amber-400 border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-150 cursor-pointer"
         >
           {theme === 'dark' ? (
-            <Sun className="h-4 w-4 text-amber-400" />
+            <Sun className="h-5 w-5 fill-amber-400/20 text-amber-400" />
           ) : (
-            <Moon className="h-4 w-4 text-slate-700" />
+            <Moon className="h-5 w-5 fill-slate-800/10 text-slate-800" />
           )}
         </button>
       </div>
