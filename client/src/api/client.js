@@ -35,18 +35,21 @@ apiClient.interceptors.response.use(
 
     // On 401 Unauthorized: clear auth state & redirect to /login
     if (status === 401) {
-      useAuthStore.getState().logout();
-      if (typeof window !== 'undefined') {
+      useAuthStore.getState().setUser(null);
+      if (typeof window !== 'undefined' && !error.config?.skipAuthRedirect) {
         const path = window.location.pathname;
         const isPublicAuthRoute =
           path.startsWith('/login') ||
           path.startsWith('/setup') ||
+          path.startsWith('/forgot-password') ||
+          path.startsWith('/reset-password') ||
           path.startsWith('/accept-invite') ||
           path.startsWith('/capture') ||
           path.startsWith('/design');
 
         if (!isPublicAuthRoute) {
-          window.location.href = '/login';
+          const returnUrl = encodeURIComponent(path + window.location.search);
+          window.location.href = `/login?returnUrl=${returnUrl}`;
         }
       }
     }

@@ -7,6 +7,11 @@ function getInitialTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function getInitialSidebar() {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('smartconnect_sidebar_collapsed') === 'true';
+}
+
 function applyThemeToDOM(theme) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
@@ -19,7 +24,8 @@ function applyThemeToDOM(theme) {
 
 export const useUIStore = create((set, get) => ({
   theme: getInitialTheme(),
-  sidebarCollapsed: false,
+  sidebarCollapsed: getInitialSidebar(),
+  mobileSidebarOpen: false,
 
   setTheme: (theme) => {
     localStorage.setItem('smartconnect_theme', theme);
@@ -35,9 +41,18 @@ export const useUIStore = create((set, get) => ({
     set({ theme: next });
   },
 
-  setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
+  setSidebarCollapsed: (sidebarCollapsed) => {
+    localStorage.setItem('smartconnect_sidebar_collapsed', String(sidebarCollapsed));
+    set({ sidebarCollapsed });
+  },
 
-  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleSidebar: () => {
+    const next = !get().sidebarCollapsed;
+    localStorage.setItem('smartconnect_sidebar_collapsed', String(next));
+    set({ sidebarCollapsed: next });
+  },
+
+  setMobileSidebarOpen: (open) => set({ mobileSidebarOpen: open }),
 }));
 
 export const useUiStore = useUIStore;
