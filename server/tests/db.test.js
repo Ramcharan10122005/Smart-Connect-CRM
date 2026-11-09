@@ -15,3 +15,4 @@ describe('Prisma Database Connection', () => {
     assert.ok(sourcesCount >= 5, `Expected at least 5 lead sources, got ${sourcesCount}`);
   });
 });
+
