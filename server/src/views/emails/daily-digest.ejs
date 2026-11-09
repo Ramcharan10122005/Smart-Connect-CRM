@@ -1,0 +1,63 @@
+<h2 style="margin-top: 0; color: #1E293B; font-size: 20px;">Daily Morning Digest ☀️</h2>
+<p>Good morning <%= userName %>,</p>
+<p>Here is your daily activity briefing for <strong><%= dateStr %></strong>.</p>
+
+<table style="width: 100%; border-collapse: separate; border-spacing: 12px 0; margin: 20px 0;">
+  <tr>
+    <td style="background: <%= overdueCount > 0 ? '#FEE2E2' : '#F1F5F9' %>; padding: 16px; border-radius: 8px; text-align: center; width: 33%;">
+      <span style="display: block; font-size: 24px; font-weight: 700; color: <%= overdueCount > 0 ? '#DC2626' : '#475569' %>;"><%= overdueCount %></span>
+      <span style="font-size: 12px; color: #64748B; text-transform: uppercase; font-weight: 600;">Overdue Tasks</span>
+    </td>
+    <td style="background: #E0E7FF; padding: 16px; border-radius: 8px; text-align: center; width: 33%;">
+      <span style="display: block; font-size: 24px; font-weight: 700; color: #4338CA;"><%= todayFollowUps.length %></span>
+      <span style="font-size: 12px; color: #64748B; text-transform: uppercase; font-weight: 600;">Tasks Today</span>
+    </td>
+    <td style="background: #DCFCE7; padding: 16px; border-radius: 8px; text-align: center; width: 33%;">
+      <span style="display: block; font-size: 24px; font-weight: 700; color: #16A34A;"><%= newLeads.length %></span>
+      <span style="font-size: 12px; color: #64748B; text-transform: uppercase; font-weight: 600;">New Leads</span>
+    </td>
+  </tr>
+</table>
+
+<h3 style="font-size: 16px; color: #1E293B; margin: 24px 0 12px 0;">Tasks Scheduled for Today</h3>
+<% if (todayFollowUps.length === 0) { %>
+  <p style="font-size: 14px; color: #64748B; font-style: italic;">No follow-ups scheduled for today. Great time for prospecting!</p>
+<% } else { %>
+  <div class="card-list" style="padding: 12px;">
+    <% todayFollowUps.forEach(function(item) { %>
+      <div style="border-bottom: 1px solid #E2E8F0; padding: 8px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 14px; color: #1E293B;"><%= item.title %></strong>
+          <% const p = (item.priority || 'MEDIUM').toLowerCase(); %>
+          <span class="badge badge-<%= p %>"><%= item.priority %></span>
+        </div>
+        <div style="font-size: 12px; color: #64748B; margin-top: 4px;">
+          Due <%= new Date(item.dueAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+          <% if (item.contact) { %> • Contact: <%= item.contact.firstName %> <%= item.contact.lastName %><% } %>
+          <% if (item.lead) { %> • Lead: <%= item.lead.title %><% } %>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<h3 style="font-size: 16px; color: #1E293B; margin: 24px 0 12px 0;">Newly Assigned Leads (Last 24 Hours)</h3>
+<% if (newLeads.length === 0) { %>
+  <p style="font-size: 14px; color: #64748B; font-style: italic;">No new leads assigned in the last 24 hours.</p>
+<% } else { %>
+  <div class="card-list" style="padding: 12px;">
+    <% newLeads.forEach(function(lead) { %>
+      <div style="border-bottom: 1px solid #E2E8F0; padding: 8px 0;">
+        <strong style="font-size: 14px; color: #1E293B;"><%= lead.title %></strong>
+        <% if (lead.companyName) { %> <span style="font-size: 13px; color: #64748B;">(<%= lead.companyName %>)</span><% } %>
+        <div style="font-size: 12px; color: #64748B; margin-top: 4px;">
+          Stage: <%= lead.stage?.name || 'New' %> • Value: <%= lead.currency %> <%= (lead.value || 0).toLocaleString() %>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<div style="text-align: center; margin: 32px 0 16px 0;">
+  <a href="<%= appUrl %>" class="btn-primary" target="_blank">Open SmartConnect Dashboard</a>
+</div>

@@ -1,0 +1,29 @@
+<h2 style="margin-top: 0; color: #1E293B; font-size: 20px;">Task Reminder: <%= followUp.title %></h2>
+<p>Hello <%= userName %>,</p>
+<p>This is a scheduled reminder for a follow-up task due in the next 15 minutes:</p>
+
+<div class="card-list">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <strong style="font-size: 16px; color: #0F172A;"><%= followUp.title %></strong>
+    <% const p = (followUp.priority || 'MEDIUM').toLowerCase(); %>
+    <span class="badge badge-<%= p %>"><%= followUp.priority %></span>
+  </div>
+
+  <% if (followUp.description) { %>
+    <p style="margin: 8px 0; font-size: 14px; color: #475569;"><%= followUp.description %></p>
+  <% } %>
+
+  <div style="margin-top: 12px; font-size: 13px; color: #64748B;">
+    <p style="margin: 4px 0;"><strong>Due Time:</strong> <%= new Date(followUp.dueAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+    <% if (followUp.contact) { %>
+      <p style="margin: 4px 0;"><strong>Contact:</strong> <%= followUp.contact.firstName %> <%= followUp.contact.lastName %></p>
+    <% } %>
+    <% if (followUp.lead) { %>
+      <p style="margin: 4px 0;"><strong>Lead:</strong> <%= followUp.lead.title %></p>
+    <% } %>
+  </div>
+</div>
+
+<div style="text-align: center; margin: 24px 0;">
+  <a href="<%= appUrl %>" class="btn-primary" target="_blank">View Task in SmartConnect</a>
+</div>

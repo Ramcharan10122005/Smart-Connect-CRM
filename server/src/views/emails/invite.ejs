@@ -1,0 +1,12 @@
+<h2 style="margin-top: 0; color: #1E293B; font-size: 20px;">You've been invited!</h2>
+<p>Hello,</p>
+<p><strong><%= invitedByName || 'An administrator' %></strong> has invited you to join the team on <strong>SmartConnect CRM</strong>.</p>
+<p>Click the button below to accept your invitation, set your account password, and get started:</p>
+
+<div style="text-align: center; margin: 28px 0;">
+  <a href="<%= inviteUrl %>" class="btn-primary" target="_blank">Accept Invitation & Set Password</a>
+</div>
+
+<p style="font-size: 13px; color: #64748B;">This invitation link will expire in <strong>7 days</strong>. If you did not expect this invitation, you can safely ignore this email.</p>
+<hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0;" />
+<p style="font-size: 12px; color: #94A3B8; word-break: break-all;">Button not working? Copy and paste this URL into your browser:<br /><a href="<%= inviteUrl %>" style="color: #4F46E5;"><%= inviteUrl %></a></p>

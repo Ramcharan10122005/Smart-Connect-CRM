@@ -1,6 +1,7 @@
 import env from './src/config/env.js';
 import app from './src/app.js';
 import { logger } from './src/utils/logger.js';
+import { startScheduler, stopScheduler } from './src/jobs/scheduler.js';
 
 let PORT = env.PORT;
 
@@ -9,6 +10,7 @@ function startServer(port) {
     logger.info(
       `[SmartConnect Server] running on http://localhost:${port} in ${env.NODE_ENV} mode`
     );
+    startScheduler();
   });
 
   server.on('error', (err) => {
@@ -25,6 +27,7 @@ function startServer(port) {
 
   const gracefulShutdown = (signal) => {
     logger.info(`Received ${signal}. Shutting down gracefully...`);
+    stopScheduler();
     server.close(() => {
       logger.info('HTTP server closed.');
       process.exit(0);

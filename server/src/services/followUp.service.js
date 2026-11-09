@@ -2,6 +2,8 @@ import prisma from '../config/prisma.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePaginationParams, buildPaginationMeta } from '../utils/queryHelper.js';
 import { createAuditLog } from './audit.service.js';
+import { createNotification } from './notification.service.js';
+import { logger } from '../utils/logger.js';
 
 export function computeNextDueDate(currentDate, recurrence) {
   const next = new Date(currentDate);
@@ -75,6 +77,21 @@ export async function createFollowUp(data, user) {
     entityId: followUp.id,
     meta: { title: followUp.title, dueAt: followUp.dueAt, assigneeId },
   });
+
+  // Notify assignee if assigned to someone else
+  if (assigneeId && assigneeId !== user.id) {
+    try {
+      await createNotification({
+        userId: assigneeId,
+        type: 'FOLLOW_UP_ASSIGNED',
+        title: 'New Follow-Up Assigned',
+        body: `You have been assigned to follow-up "${followUp.title}"`,
+        link: '/follow-ups',
+      });
+    } catch (err) {
+      logger.warn({ err }, 'Failed to create follow-up assignment notification');
+    }
+  }
 
   return followUp;
 }
@@ -374,6 +391,21 @@ export async function reassignFollowUp(id, { assigneeId }, user) {
     entityId: id,
     meta: { previousAssigneeId: followUp.assigneeId, newAssigneeId: assigneeId },
   });
+
+  // Notify new assignee if assigned to someone else
+  if (assigneeId !== user.id) {
+    try {
+      await createNotification({
+        userId: assigneeId,
+        type: 'FOLLOW_UP_ASSIGNED',
+        title: 'Follow-Up Reassigned',
+        body: `Follow-up "${updated.title}" has been reassigned to you`,
+        link: '/follow-ups',
+      });
+    } catch (err) {
+      logger.warn({ err }, 'Failed to create follow-up reassignment notification');
+    }
+  }
 
   return updated;
 }

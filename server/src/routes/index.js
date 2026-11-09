@@ -10,6 +10,7 @@ import leadSourceRoutes from './leadSource.routes.js';
 import leadRoutes from './lead.routes.js';
 import activityRoutes from './activity.routes.js';
 import followUpRoutes from './followUp.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use('/lead-sources', leadSourceRoutes);
 router.use('/leads', leadRoutes);
 router.use('/activities', activityRoutes);
 router.use('/follow-ups', followUpRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

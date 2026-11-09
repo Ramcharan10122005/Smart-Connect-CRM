@@ -4,6 +4,8 @@ import { scopeByOwner } from '../utils/scope.js';
 import { parsePaginationParams, buildPaginationMeta } from '../utils/queryHelper.js';
 import { createAuditLog } from './audit.service.js';
 import { calculateScoreFromParameters, recomputeLeadScore } from './leadScoring.service.js';
+import { createNotification } from './notification.service.js';
+import { logger } from '../utils/logger.js';
 
 function buildLeadWhereClause(query, user) {
   const where = {
@@ -266,6 +268,21 @@ export async function createLead(data, user) {
     meta: { title: lead.title, value: lead.value, stageId: stage.id, ownerId },
   });
 
+  // Notify owner if assigned to someone else
+  if (ownerId && ownerId !== user.id) {
+    try {
+      await createNotification({
+        userId: ownerId,
+        type: 'LEAD_ASSIGNED',
+        title: 'New Lead Assigned',
+        body: `You have been assigned to lead "${lead.title}"`,
+        link: `/leads/${lead.id}`,
+      });
+    } catch (err) {
+      logger.warn({ err }, 'Failed to create lead assignment notification');
+    }
+  }
+
   return lead;
 }
 
@@ -301,6 +318,21 @@ export async function updateLead(id, data, user) {
     entityId: id,
     meta: { title: updated.title, value: updated.value },
   });
+
+  // Notify new owner if lead ownership changed to someone else
+  if (data.ownerId && data.ownerId !== existing.ownerId && data.ownerId !== user.id) {
+    try {
+      await createNotification({
+        userId: data.ownerId,
+        type: 'LEAD_ASSIGNED',
+        title: 'Lead Assigned to You',
+        body: `Lead "${updated.title}" has been reassigned to you`,
+        link: `/leads/${updated.id}`,
+      });
+    } catch (err) {
+      logger.warn({ err }, 'Failed to create lead reassignment notification');
+    }
+  }
 
   return updated;
 }
