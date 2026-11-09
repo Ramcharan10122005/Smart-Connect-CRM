@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/auth.js';
+import { uploadCsv } from '../middleware/upload.js';
 import * as contactController from '../controllers/contact.controller.js';
 import * as tagController from '../controllers/tag.controller.js';
 import {
@@ -22,6 +23,21 @@ router.get(
   validate({ query: getContactsQuerySchema }),
   asyncHandler(contactController.getContacts)
 );
+
+// CSV Export (must be before /:id)
+router.get(
+  '/export.csv',
+  validate({ query: getContactsQuerySchema }),
+  asyncHandler(contactController.exportContactsCsv)
+);
+
+// CSV Import Preview (upload file) & Commit
+router.post(
+  '/import/preview',
+  uploadCsv.single('file'),
+  asyncHandler(contactController.previewContactImport)
+);
+router.post('/import/commit', asyncHandler(contactController.commitContactImport));
 
 // Bulk contact operations (assign owner, add tag, remove tag, delete)
 router.post(

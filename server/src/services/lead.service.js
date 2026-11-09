@@ -590,6 +590,39 @@ export async function convertLead(id, user) {
   };
 }
 
+export async function getLeadsForExport(query, user) {
+  const where = buildLeadWhereClause(query, user);
+  const leads = await prisma.lead.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      stage: { select: { name: true } },
+      owner: { select: { name: true } },
+      source: { select: { name: true } },
+      company: { select: { name: true } },
+    },
+  });
+  return leads;
+}
+
+export const leadExportColumns = [
+  { header: 'Title', key: 'title' },
+  { header: 'First Name', key: 'firstName' },
+  { header: 'Last Name', key: 'lastName' },
+  { header: 'Email', key: 'email' },
+  { header: 'Phone', key: 'phone' },
+  { header: 'Company', value: (l) => l.companyName || l.company?.name || '' },
+  { header: 'Stage', value: (l) => l.stage?.name || '' },
+  { header: 'Value', key: 'value' },
+  { header: 'Currency', key: 'currency' },
+  { header: 'Status', key: 'status' },
+  { header: 'Priority', key: 'priority' },
+  { header: 'Score', key: 'score' },
+  { header: 'Owner', value: (l) => l.owner?.name || '' },
+  { header: 'Lead Source', value: (l) => l.source?.name || '' },
+  { header: 'Created At', key: 'createdAt' },
+];
+
 export default {
   getLeads,
   getLeadBoard,
@@ -599,4 +632,6 @@ export default {
   deleteLead,
   moveLeadStage,
   convertLead,
+  getLeadsForExport,
+  leadExportColumns,
 };

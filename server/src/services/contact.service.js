@@ -3,15 +3,15 @@ import { ApiError } from '../utils/ApiError.js';
 import { scopeByOwner } from '../utils/scope.js';
 import { parsePaginationParams, buildPaginationMeta } from '../utils/queryHelper.js';
 import { createAuditLog } from './audit.service.js';
+import { parseCSV } from '../utils/csv.js';
 
-export async function getContacts(query, user) {
-  const { page, limit, skip, take, orderBy, search } = parsePaginationParams(query, 'lastName');
-
+export function buildContactWhereClause(query, user) {
   const where = {
     deletedAt: null,
     ...scopeByOwner(user, 'ownerId'),
   };
 
+  const search = query.search;
   if (search) {
     where.OR = [
       { firstName: { contains: search, mode: 'insensitive' } },
@@ -53,6 +53,13 @@ export async function getContacts(query, user) {
     if (query.createdFrom) where.createdAt.gte = query.createdFrom;
     if (query.createdTo) where.createdAt.lte = query.createdTo;
   }
+
+  return where;
+}
+
+export async function getContacts(query, user) {
+  const { page, limit, skip, take, orderBy } = parsePaginationParams(query, 'lastName');
+  const where = buildContactWhereClause(query, user);
 
   const [contacts, total] = await Promise.all([
     prisma.contact.findMany({
@@ -435,6 +442,268 @@ export async function updateContactLastContactedAt(contactId, timestamp = new Da
   }
 }
 
+// -------------------------------------------------------------
+// Contact CSV Import & Export
+// -------------------------------------------------------------
+
+export function previewContactImport(fileBuffer) {
+  const { headers, rows } = parseCSV(fileBuffer);
+
+  if (headers.length === 0) {
+    throw ApiError.badRequest('The uploaded CSV file is empty or missing headers');
+  }
+
+  // Heuristic mapping detection
+  const mappingSuggestion = {};
+  const standardFields = [
+    { field: 'firstName', regex: /^(first\s*name|firstname|fname|first)$/i },
+    { field: 'lastName', regex: /^(last\s*name|lastname|lname|last|surname)$/i },
+    { field: 'email', regex: /^(email|e-mail|email\s*address)$/i },
+    { field: 'phone', regex: /^(phone|telephone|mobile|phone\s*number|cell)$/i },
+    { field: 'jobTitle', regex: /^(job\s*title|title|role|position)$/i },
+    { field: 'companyName', regex: /^(company|company\s*name|organization|org)$/i },
+    { field: 'addressLine1', regex: /^(address|address\s*line\s*1|street)$/i },
+    { field: 'city', regex: /^city$/i },
+    { field: 'state', regex: /^(state|province|region)$/i },
+    { field: 'country', regex: /^country$/i },
+    { field: 'postalCode', regex: /^(postal\s*code|zip|zip\s*code|postcode)$/i },
+    { field: 'notes', regex: /^(notes|description|comments)$/i },
+    { field: 'lifecycleStage', regex: /^(lifecycle|lifecycle\s*stage|stage)$/i },
+  ];
+
+  for (const header of headers) {
+    for (const std of standardFields) {
+      if (std.regex.test(header) && !Object.values(mappingSuggestion).includes(std.field)) {
+        mappingSuggestion[header] = std.field;
+        break;
+      }
+    }
+  }
+
+  // Row validation errors check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const firstNameCol = Object.keys(mappingSuggestion).find(
+    (k) => mappingSuggestion[k] === 'firstName'
+  );
+  const emailCol = Object.keys(mappingSuggestion).find((k) => mappingSuggestion[k] === 'email');
+
+  const validationErrors = [];
+  rows.forEach((row, idx) => {
+    const rowNum = idx + 1;
+    if (firstNameCol && (!row[firstNameCol] || String(row[firstNameCol]).trim() === '')) {
+      validationErrors.push({
+        rowNumber: rowNum,
+        field: 'firstName',
+        error: 'First name is required',
+      });
+    }
+    if (emailCol && row[emailCol]) {
+      const emailVal = String(row[emailCol]).trim();
+      if (emailVal && !emailRegex.test(emailVal)) {
+        validationErrors.push({
+          rowNumber: rowNum,
+          field: 'email',
+          error: `Invalid email address format: "${emailVal}"`,
+        });
+      }
+    }
+  });
+
+  return {
+    detectedColumns: headers,
+    mappingSuggestion,
+    sampleRows: rows.slice(0, 10),
+    totalRows: rows.length,
+    validationErrors,
+  };
+}
+
+export async function commitContactImport({ mapping, rows }, user) {
+  if (!mapping || typeof mapping !== 'object') {
+    throw ApiError.badRequest('Mapping configuration is required');
+  }
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw ApiError.badRequest('No rows provided for import');
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let created = 0;
+  let skipped = 0;
+  let failed = 0;
+  const errors = [];
+
+  // Invert mapping for fast lookup: { fieldName: csvHeaderName }
+  const fieldToHeader = {};
+  for (const [csvHeader, fieldName] of Object.entries(mapping)) {
+    if (fieldName) {
+      fieldToHeader[fieldName] = csvHeader;
+    }
+  }
+
+  // Gather candidate emails to pre-check duplicates
+  const candidateEmails = rows
+    .map((r) => {
+      const header = fieldToHeader['email'];
+      return header && r[header] ? String(r[header]).trim().toLowerCase() : null;
+    })
+    .filter(Boolean);
+
+  const existingContacts = await prisma.contact.findMany({
+    where: {
+      deletedAt: null,
+      email: { in: candidateEmails },
+    },
+    select: { email: true },
+  });
+  const existingEmailSet = new Set(existingContacts.map((c) => c.email.toLowerCase()));
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 1;
+
+    const firstName = fieldToHeader['firstName']
+      ? String(row[fieldToHeader['firstName']] || '').trim()
+      : '';
+    const lastName = fieldToHeader['lastName']
+      ? String(row[fieldToHeader['lastName']] || '').trim()
+      : '';
+    const emailRaw = fieldToHeader['email'] ? String(row[fieldToHeader['email']] || '').trim() : '';
+    const email = emailRaw || null;
+    const phone = fieldToHeader['phone']
+      ? String(row[fieldToHeader['phone']] || '').trim() || null
+      : null;
+    const jobTitle = fieldToHeader['jobTitle']
+      ? String(row[fieldToHeader['jobTitle']] || '').trim() || null
+      : null;
+    const companyName = fieldToHeader['companyName']
+      ? String(row[fieldToHeader['companyName']] || '').trim() || null
+      : null;
+    const addressLine1 = fieldToHeader['addressLine1']
+      ? String(row[fieldToHeader['addressLine1']] || '').trim() || null
+      : null;
+    const city = fieldToHeader['city']
+      ? String(row[fieldToHeader['city']] || '').trim() || null
+      : null;
+    const state = fieldToHeader['state']
+      ? String(row[fieldToHeader['state']] || '').trim() || null
+      : null;
+    const country = fieldToHeader['country']
+      ? String(row[fieldToHeader['country']] || '').trim() || null
+      : null;
+    const postalCode = fieldToHeader['postalCode']
+      ? String(row[fieldToHeader['postalCode']] || '').trim() || null
+      : null;
+    const notes = fieldToHeader['notes']
+      ? String(row[fieldToHeader['notes']] || '').trim() || null
+      : null;
+
+    let lifecycleStage = 'PROSPECT';
+    if (fieldToHeader['lifecycleStage'] && row[fieldToHeader['lifecycleStage']]) {
+      const stageVal = String(row[fieldToHeader['lifecycleStage']]).trim().toUpperCase();
+      if (['PROSPECT', 'CUSTOMER', 'INACTIVE'].includes(stageVal)) {
+        lifecycleStage = stageVal;
+      }
+    }
+
+    if (!firstName) {
+      failed++;
+      errors.push({ rowNumber: rowNum, error: 'First name is required' });
+      continue;
+    }
+
+    if (email) {
+      if (!emailRegex.test(email)) {
+        failed++;
+        errors.push({ rowNumber: rowNum, error: `Invalid email address format: "${email}"` });
+        continue;
+      }
+      if (existingEmailSet.has(email.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+    }
+
+    try {
+      let companyId = null;
+      if (companyName) {
+        let company = await prisma.company.findFirst({
+          where: {
+            name: { equals: companyName, mode: 'insensitive' },
+            deletedAt: null,
+          },
+        });
+        if (!company) {
+          company = await prisma.company.create({
+            data: {
+              name: companyName,
+              ownerId: user.id,
+            },
+          });
+        }
+        companyId = company.id;
+      }
+
+      await prisma.contact.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          phone,
+          jobTitle,
+          companyId,
+          ownerId: user.role === 'REP' ? user.id : user.id,
+          lifecycleStage,
+          addressLine1,
+          city,
+          state,
+          country,
+          postalCode,
+          notes,
+        },
+      });
+
+      if (email) {
+        existingEmailSet.add(email.toLowerCase());
+      }
+      created++;
+    } catch (err) {
+      failed++;
+      errors.push({ rowNumber: rowNum, error: err.message || 'Database creation error' });
+    }
+  }
+
+  return { created, skipped, failed, errors };
+}
+
+export async function getContactsForExport(query, user) {
+  const where = buildContactWhereClause(query, user);
+  const contacts = await prisma.contact.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      company: { select: { name: true } },
+      owner: { select: { name: true } },
+      source: { select: { name: true } },
+    },
+  });
+  return contacts;
+}
+
+export const contactExportColumns = [
+  { header: 'First Name', key: 'firstName' },
+  { header: 'Last Name', key: 'lastName' },
+  { header: 'Email', key: 'email' },
+  { header: 'Phone', key: 'phone' },
+  { header: 'Job Title', key: 'jobTitle' },
+  { header: 'Company', value: (c) => c.company?.name || '' },
+  { header: 'Lifecycle Stage', key: 'lifecycleStage' },
+  { header: 'Owner', value: (c) => c.owner?.name || '' },
+  { header: 'Lead Source', value: (c) => c.source?.name || '' },
+  { header: 'City', key: 'city' },
+  { header: 'Country', key: 'country' },
+  { header: 'Created At', key: 'createdAt' },
+];
+
 export default {
   getContacts,
   getContactById,
@@ -444,4 +713,8 @@ export default {
   deleteContact,
   bulkContactAction,
   updateContactLastContactedAt,
+  previewContactImport,
+  commitContactImport,
+  getContactsForExport,
+  contactExportColumns,
 };

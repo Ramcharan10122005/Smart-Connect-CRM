@@ -26,6 +26,13 @@ router.get(
   asyncHandler(leadController.getLeadBoard)
 );
 
+// CSV Export (must be before /:id)
+router.get(
+  '/export.csv',
+  validate({ query: getLeadsQuerySchema }),
+  asyncHandler(leadController.exportLeadsCsv)
+);
+
 // Single lead CRUD
 router.get('/:id', asyncHandler(leadController.getLeadById));
 router.post('/', validate({ body: createLeadSchema }), asyncHandler(leadController.createLead));

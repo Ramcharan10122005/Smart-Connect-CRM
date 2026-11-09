@@ -1,5 +1,6 @@
 import * as leadService from '../services/lead.service.js';
 import { successResponse } from '../utils/response.js';
+import { sendCSVResponse } from '../utils/csv.js';
 
 export async function getLeads(req, res) {
   const { leads, meta } = await leadService.getLeads(req.query, req.user);
@@ -41,6 +42,11 @@ export async function convertLead(req, res) {
   return successResponse(res, result);
 }
 
+export async function exportLeadsCsv(req, res) {
+  const leads = await leadService.getLeadsForExport(req.query, req.user);
+  return sendCSVResponse(res, 'leads-export.csv', leadService.leadExportColumns, leads);
+}
+
 export default {
   getLeads,
   getLeadBoard,
@@ -50,4 +56,5 @@ export default {
   deleteLead,
   moveLeadStage,
   convertLead,
+  exportLeadsCsv,
 };
