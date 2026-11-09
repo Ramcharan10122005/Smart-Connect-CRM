@@ -5,6 +5,9 @@ import userRoutes from './user.routes.js';
 import tagRoutes from './tag.routes.js';
 import companyRoutes from './company.routes.js';
 import contactRoutes from './contact.routes.js';
+import pipelineStageRoutes from './pipelineStage.routes.js';
+import leadSourceRoutes from './leadSource.routes.js';
+import leadRoutes from './lead.routes.js';
 
 const router = Router();
 
@@ -17,5 +20,8 @@ router.use('/users', userRoutes);
 router.use('/tags', tagRoutes);
 router.use('/companies', companyRoutes);
 router.use('/contacts', contactRoutes);
+router.use('/pipeline-stages', pipelineStageRoutes);
+router.use('/lead-sources', leadSourceRoutes);
+router.use('/leads', leadRoutes);
 
 export default router;
