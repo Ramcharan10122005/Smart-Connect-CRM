@@ -127,3 +127,4 @@ export function RecentActivityWidget({ activities = [], isLoading = false, isErr
 }
 
 export default RecentActivityWidget;
+

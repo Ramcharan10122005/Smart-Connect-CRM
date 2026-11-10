@@ -102,3 +102,4 @@ export function RevenueChart({ data = [], isLoading = false, isError = false, on
 }
 
 export default RevenueChart;
+

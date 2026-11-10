@@ -99,3 +99,4 @@ export function ActivityChart({ data = [], isLoading = false, isError = false, o
 }
 
 export default ActivityChart;
+

@@ -269,6 +269,145 @@ export async function deleteCompany(id, user) {
   return { message: 'Company soft-deleted successfully' };
 }
 
+export async function bulkCompanyAction(payload, user) {
+  const { action, companyIds } = payload;
+
+  const scopedFilter = {
+    id: { in: companyIds },
+    deletedAt: null,
+    ...scopeByOwner(user, 'ownerId'),
+  };
+
+  const eligibleCompanies = await prisma.company.findMany({
+    where: scopedFilter,
+    select: { id: true },
+  });
+
+  const eligibleIds = eligibleCompanies.map((c) => c.id);
+
+  if (eligibleIds.length === 0) {
+    throw ApiError.badRequest('No accessible companies found for this bulk operation');
+  }
+
+  let resultMeta = {};
+
+  switch (action) {
+    case 'assign_owner': {
+      await prisma.company.updateMany({
+        where: { id: { in: eligibleIds } },
+        data: { ownerId: payload.ownerId },
+      });
+      resultMeta = { updatedCount: eligibleIds.length, ownerId: payload.ownerId };
+      break;
+    }
+
+    case 'add_tag': {
+      for (const companyId of eligibleIds) {
+        await prisma.companyTag.upsert({
+          where: { companyId_tagId: { companyId, tagId: payload.tagId } },
+          update: {},
+          create: { companyId, tagId: payload.tagId },
+        });
+      }
+      resultMeta = { taggedCount: eligibleIds.length, tagId: payload.tagId };
+      break;
+    }
+
+    case 'remove_tag': {
+      const removed = await prisma.companyTag.deleteMany({
+        where: {
+          companyId: { in: eligibleIds },
+          tagId: payload.tagId,
+        },
+      });
+      resultMeta = { removedCount: removed.count, tagId: payload.tagId };
+      break;
+    }
+
+    case 'delete': {
+      await prisma.company.updateMany({
+        where: { id: { in: eligibleIds } },
+        data: { deletedAt: new Date() },
+      });
+      resultMeta = { deletedCount: eligibleIds.length };
+      break;
+    }
+  }
+
+  await createAuditLog({
+    userId: user.id,
+    action: `BULK_COMPANY_${action.toUpperCase()}`,
+    entity: 'Company',
+    entityId: 'BULK',
+    meta: { affectedCount: eligibleIds.length, ...resultMeta },
+  });
+
+  return {
+    message: `Bulk ${action.replace('_', ' ')} completed successfully on ${eligibleIds.length} company(ies)`,
+    affectedCount: eligibleIds.length,
+  };
+}
+
+export async function getCompaniesForExport(query, user) {
+  const where = {
+    deletedAt: null,
+    ...scopeByOwner(user, 'ownerId'),
+  };
+
+  if (query.search) {
+    where.OR = [
+      { name: { contains: query.search, mode: 'insensitive' } },
+      { domain: { contains: query.search, mode: 'insensitive' } },
+      { phone: { contains: query.search, mode: 'insensitive' } },
+      { city: { contains: query.search, mode: 'insensitive' } },
+      { state: { contains: query.search, mode: 'insensitive' } },
+    ];
+  }
+
+  if (query.ownerId) {
+    if (user.role === 'REP' && query.ownerId !== user.id) {
+      where.ownerId = '__UNAUTHORIZED__';
+    } else {
+      where.ownerId = query.ownerId;
+    }
+  }
+
+  if (query.industry) {
+    where.industry = { equals: query.industry, mode: 'insensitive' };
+  }
+
+  if (query.tagId) {
+    where.tags = { some: { tagId: query.tagId } };
+  }
+
+  const companies = await prisma.company.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      owner: { select: { name: true } },
+      _count: { select: { contacts: true, leads: true } },
+    },
+  });
+
+  return companies;
+}
+
+export const companyExportColumns = [
+  { header: 'Name', key: 'name' },
+  { header: 'Domain', key: 'domain' },
+  { header: 'Industry', key: 'industry' },
+  { header: 'Size', key: 'size' },
+  { header: 'Website', key: 'website' },
+  { header: 'Phone', key: 'phone' },
+  { header: 'City', key: 'city' },
+  { header: 'State', key: 'state' },
+  { header: 'Country', key: 'country' },
+  { header: 'Contacts Count', value: (c) => c._count?.contacts || 0 },
+  { header: 'Leads Count', value: (c) => c._count?.leads || 0 },
+  { header: 'Owner', value: (c) => c.owner?.name || '' },
+  { header: 'Created At', key: 'createdAt' },
+];
+
 export default {
   getCompanies,
   getCompanyById,
@@ -276,4 +415,7 @@ export default {
   createCompany,
   updateCompany,
   deleteCompany,
+  bulkCompanyAction,
+  getCompaniesForExport,
+  companyExportColumns,
 };

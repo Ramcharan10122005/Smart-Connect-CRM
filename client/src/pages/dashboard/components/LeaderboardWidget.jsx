@@ -115,3 +115,4 @@ export function LeaderboardWidget({ leaderboard = [], isLoading = false, isError
 }
 
 export default LeaderboardWidget;
+

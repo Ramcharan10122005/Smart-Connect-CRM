@@ -32,8 +32,31 @@ export const getCompaniesQuerySchema = z.object({
   createdTo: z.coerce.date().optional(),
 });
 
+export const bulkCompanyActionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('assign_owner'),
+    companyIds: z.array(z.string().uuid()).min(1, 'At least one company ID required'),
+    ownerId: z.string().uuid('Valid owner ID required'),
+  }),
+  z.object({
+    action: z.literal('add_tag'),
+    companyIds: z.array(z.string().uuid()).min(1, 'At least one company ID required'),
+    tagId: z.string().uuid('Valid tag ID required'),
+  }),
+  z.object({
+    action: z.literal('remove_tag'),
+    companyIds: z.array(z.string().uuid()).min(1, 'At least one company ID required'),
+    tagId: z.string().uuid('Valid tag ID required'),
+  }),
+  z.object({
+    action: z.literal('delete'),
+    companyIds: z.array(z.string().uuid()).min(1, 'At least one company ID required'),
+  }),
+]);
+
 export default {
   createCompanySchema,
   updateCompanySchema,
   getCompaniesQuerySchema,
+  bulkCompanyActionSchema,
 };

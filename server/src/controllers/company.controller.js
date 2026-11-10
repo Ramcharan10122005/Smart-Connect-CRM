@@ -1,5 +1,6 @@
 import * as companyService from '../services/company.service.js';
 import { successResponse } from '../utils/response.js';
+import { sendCSVResponse } from '../utils/csv.js';
 
 export async function getCompanies(req, res) {
   const { companies, meta } = await companyService.getCompanies(req.query, req.user);
@@ -31,6 +32,16 @@ export async function deleteCompany(req, res) {
   return successResponse(res, result);
 }
 
+export async function bulkCompanyAction(req, res) {
+  const result = await companyService.bulkCompanyAction(req.body, req.user);
+  return successResponse(res, result);
+}
+
+export async function exportCompaniesCsv(req, res) {
+  const companies = await companyService.getCompaniesForExport(req.query, req.user);
+  return sendCSVResponse(res, 'companies-export.csv', companyService.companyExportColumns, companies);
+}
+
 export default {
   getCompanies,
   getCompanyById,
@@ -38,4 +49,6 @@ export default {
   createCompany,
   updateCompany,
   deleteCompany,
+  bulkCompanyAction,
+  exportCompaniesCsv,
 };

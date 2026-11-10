@@ -8,6 +8,7 @@ import {
   createCompanySchema,
   updateCompanySchema,
   getCompaniesQuerySchema,
+  bulkCompanyActionSchema,
 } from '../validators/company.validator.js';
 import { attachTagSchema } from '../validators/tag.validator.js';
 
@@ -20,6 +21,20 @@ router.get(
   '/',
   validate({ query: getCompaniesQuerySchema }),
   asyncHandler(companyController.getCompanies)
+);
+
+// CSV Export (must be before /:id)
+router.get(
+  '/export.csv',
+  validate({ query: getCompaniesQuerySchema }),
+  asyncHandler(companyController.exportCompaniesCsv)
+);
+
+// Bulk company operations (assign owner, add tag, remove tag, delete)
+router.post(
+  '/bulk',
+  validate({ body: bulkCompanyActionSchema }),
+  asyncHandler(companyController.bulkCompanyAction)
 );
 
 // Company 360 overview

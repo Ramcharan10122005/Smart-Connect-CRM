@@ -99,3 +99,4 @@ export function StageFunnelChart({ data = [], isLoading = false, isError = false
 }
 
 export default StageFunnelChart;
+
