@@ -5,6 +5,7 @@ import { authenticate } from '../middleware/auth.js';
 import * as followUpController from '../controllers/followUp.controller.js';
 import {
   createFollowUpSchema,
+  updateFollowUpSchema,
   completeFollowUpSchema,
   snoozeFollowUpSchema,
   reassignFollowUpSchema,
@@ -50,5 +51,13 @@ router.patch(
   validate({ body: reassignFollowUpSchema }),
   asyncHandler(followUpController.reassignFollowUp)
 );
+
+router.patch(
+  '/:id',
+  validate({ body: updateFollowUpSchema }),
+  asyncHandler(followUpController.updateFollowUp)
+);
+
+router.delete('/:id', asyncHandler(followUpController.deleteFollowUp));
 
 export default router;

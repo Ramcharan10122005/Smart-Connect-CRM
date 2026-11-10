@@ -1,11 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, Sun, Moon, User, Settings, LogOut, Shield } from 'lucide-react';
+import {
+  Menu,
+  Search,
+  Sun,
+  Moon,
+  User,
+  Settings,
+  LogOut,
+  Shield,
+  Plus,
+  CalendarPlus,
+  Clock,
+  UserPlus,
+  Target,
+} from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useDialogStore } from '@/stores/dialogStore';
 import { initials } from '@/lib/utils';
 import { NotificationsMenu } from './NotificationsMenu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +35,7 @@ export function TopBar({ onOpenCommandPalette }) {
   const navigate = useNavigate();
   const { user, role, logout } = useAuthStore();
   const { theme, toggleTheme, setMobileSidebarOpen } = useUIStore();
+  const { openLogActivity, openCreateFollowUp } = useDialogStore();
 
   const handleLogout = async () => {
     await logout();
@@ -64,8 +81,56 @@ export function TopBar({ onOpenCommandPalette }) {
         </button>
       </div>
 
-      {/* Right side controls: Notifications, Theme, User menu */}
-      <div className="flex items-center gap-2.5">
+      {/* Right side controls: Quick actions, Notifications, Theme, User menu */}
+      <div className="flex items-center gap-2">
+        {/* Global Quick Action Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-2.5 sm:px-3 text-xs font-semibold gap-1.5 border-border/80 hover:bg-muted/70 text-foreground"
+            >
+              <Plus className="h-3.5 w-3.5 text-primary" />
+              <span className="hidden sm:inline">Quick Action</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Quick Actions
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => openLogActivity()}
+              className="cursor-pointer text-xs"
+            >
+              <CalendarPlus className="mr-2 h-4 w-4 text-emerald-500" />
+              <span>Log activity</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openCreateFollowUp()}
+              className="cursor-pointer text-xs"
+            >
+              <Clock className="mr-2 h-4 w-4 text-amber-500" />
+              <span>New follow-up</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => navigate('/customers?action=new-contact')}
+              className="cursor-pointer text-xs"
+            >
+              <UserPlus className="mr-2 h-4 w-4 text-primary" />
+              <span>New contact</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate('/leads')}
+              className="cursor-pointer text-xs"
+            >
+              <Target className="mr-2 h-4 w-4 text-indigo-500" />
+              <span>New lead</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Notifications dropdown */}
         <NotificationsMenu />
 

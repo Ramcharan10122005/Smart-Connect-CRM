@@ -410,10 +410,76 @@ export async function reassignFollowUp(id, { assigneeId }, user) {
   return updated;
 }
 
+export async function updateFollowUp(id, data, user) {
+  const followUp = await prisma.followUp.findUnique({
+    where: { id },
+  });
+
+  if (!followUp) {
+    throw ApiError.notFound('Follow-up task not found');
+  }
+
+  const updated = await prisma.followUp.update({
+    where: { id },
+    data: {
+      ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.dueAt !== undefined ? { dueAt: data.dueAt } : {}),
+      ...(data.priority !== undefined ? { priority: data.priority } : {}),
+      ...(data.assigneeId !== undefined ? { assigneeId: data.assigneeId } : {}),
+      ...(data.recurrence !== undefined ? { recurrence: data.recurrence } : {}),
+      ...(data.contactId !== undefined ? { contactId: data.contactId } : {}),
+      ...(data.leadId !== undefined ? { leadId: data.leadId } : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
+    },
+    include: {
+      assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      contact: { select: { id: true, firstName: true, lastName: true } },
+      lead: { select: { id: true, title: true } },
+    },
+  });
+
+  await createAuditLog({
+    userId: user.id,
+    action: 'FOLLOW_UP_UPDATED',
+    entity: 'FollowUp',
+    entityId: id,
+    meta: { changes: Object.keys(data) },
+  });
+
+  return updated;
+}
+
+export async function deleteFollowUp(id, user) {
+  const followUp = await prisma.followUp.findUnique({
+    where: { id },
+  });
+
+  if (!followUp) {
+    throw ApiError.notFound('Follow-up task not found');
+  }
+
+  await prisma.followUp.delete({
+    where: { id },
+  });
+
+  await createAuditLog({
+    userId: user.id,
+    action: 'FOLLOW_UP_DELETED',
+    entity: 'FollowUp',
+    entityId: id,
+    meta: { title: followUp.title },
+  });
+
+  return { message: 'Follow-up deleted successfully' };
+}
+
 export default {
   createFollowUp,
   getFollowUps,
   getFollowUpSummary,
+  updateFollowUp,
+  deleteFollowUp,
   completeFollowUp,
   snoozeFollowUp,
   reassignFollowUp,

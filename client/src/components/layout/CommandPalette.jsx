@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, Target, CalendarPlus, Clock, User, Building, TrendingUp } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useDialogStore } from '@/stores/dialogStore';
 import {
   CommandDialog,
   CommandInput,
@@ -15,6 +16,7 @@ import {
 
 export function CommandPalette({ open, onOpenChange }) {
   const navigate = useNavigate();
+  const { openLogActivity, openCreateFollowUp } = useDialogStore();
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 250);
   const [results, setResults] = useState(null);
@@ -153,14 +155,14 @@ export function CommandPalette({ open, onOpenChange }) {
           </CommandItem>
 
           <CommandItem
-            onSelect={() => handleSelect(() => navigate('/activities?action=log-activity'))}
+            onSelect={() => handleSelect(() => openLogActivity())}
           >
             <CalendarPlus className="mr-2 h-4 w-4 text-emerald-500" />
             <span>Log activity</span>
           </CommandItem>
 
           <CommandItem
-            onSelect={() => handleSelect(() => navigate('/follow-ups?action=new-followup'))}
+            onSelect={() => handleSelect(() => openCreateFollowUp())}
           >
             <Clock className="mr-2 h-4 w-4 text-amber-500" />
             <span>New follow-up</span>

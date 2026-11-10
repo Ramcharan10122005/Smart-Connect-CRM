@@ -4,6 +4,8 @@ import { useUIStore } from '@/stores/uiStore';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { CommandPalette } from '@/components/layout/CommandPalette';
+import { LogActivityModal } from '@/components/activities/LogActivityModal';
+import { FollowUpModal } from '@/components/followups/FollowUpModal';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -50,6 +52,10 @@ export function AppLayout() {
 
         {/* Global Command Palette */}
         <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
+
+        {/* Global Modals */}
+        <LogActivityModal />
+        <FollowUpModal />
       </div>
     </TooltipProvider>
   );

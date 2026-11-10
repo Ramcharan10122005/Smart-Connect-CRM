@@ -31,10 +31,22 @@ export async function reassignFollowUp(req, res) {
   return successResponse(res, updated);
 }
 
+export async function updateFollowUp(req, res) {
+  const updated = await followUpService.updateFollowUp(req.params.id, req.body, req.user);
+  return successResponse(res, updated);
+}
+
+export async function deleteFollowUp(req, res) {
+  const result = await followUpService.deleteFollowUp(req.params.id, req.user);
+  return successResponse(res, result);
+}
+
 export default {
   createFollowUp,
   getFollowUps,
   getFollowUpSummary,
+  updateFollowUp,
+  deleteFollowUp,
   completeFollowUp,
   snoozeFollowUp,
   reassignFollowUp,
