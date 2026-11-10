@@ -1,123 +1,179 @@
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  User,
+  Bell,
+  Users,
+  Workflow,
+  Tag,
+  Globe,
+  Palette,
+} from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { User, Bell, Users, Workflow, Tag } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ProfileSettings } from './components/ProfileSettings';
+import { NotificationSettings } from './components/NotificationSettings';
+import { TeamSettings } from './components/TeamSettings';
+import { PipelineSettings } from './components/PipelineSettings';
+import { TagsAndSourcesSettings } from './components/TagsAndSourcesSettings';
+import { LeadCaptureSettings } from './components/LeadCaptureSettings';
+import { AppearanceSettings } from './components/AppearanceSettings';
 
 export default function SettingsPage() {
-  const { user, role } = useAuthStore();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { role } = useAuthStore();
+
   const isAdmin = role === 'ADMIN';
+  const isManager = role === 'MANAGER';
+  const canManageTeam = isAdmin || isManager;
+
+  // Compute active tab from URL path (e.g. /settings/team -> 'team')
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const currentTabFromPath = pathParts[1] || 'profile';
+
+  const [activeTab, setActiveTab] = useState(currentTabFromPath);
+
+  useEffect(() => {
+    if (pathParts[1]) {
+      setActiveTab(pathParts[1]);
+    } else {
+      setActiveTab('profile');
+    }
+  }, [location.pathname, pathParts]);
+
+  const navItems = [
+    {
+      id: 'profile',
+      label: 'Personal Profile',
+      description: 'Account info & password',
+      icon: User,
+      visible: true,
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      description: 'Reminders & digests',
+      icon: Bell,
+      visible: true,
+    },
+    {
+      id: 'appearance',
+      label: 'Appearance',
+      description: 'Theme & display',
+      icon: Palette,
+      visible: true,
+    },
+    {
+      id: 'team',
+      label: 'Team Management',
+      description: 'Members & roles',
+      icon: Users,
+      visible: canManageTeam,
+      badge: isManager ? 'Manager' : undefined,
+    },
+    {
+      id: 'pipeline',
+      label: 'Pipeline Stages',
+      description: 'Stages & win probability',
+      icon: Workflow,
+      visible: isAdmin,
+      badge: 'Admin',
+    },
+    {
+      id: 'tags',
+      label: 'Tags & Sources',
+      description: 'Labels & lead channels',
+      icon: Tag,
+      visible: canManageTeam,
+    },
+    {
+      id: 'lead-capture',
+      label: 'Lead Capture Form',
+      description: 'Website embed & routing',
+      icon: Globe,
+      visible: isAdmin,
+      badge: 'Admin',
+    },
+  ].filter((item) => item.visible);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/settings/${tabId}`);
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <PageHeader
-        title="Settings"
-        description="Manage your profile, notification preferences, team members, and pipeline configurations."
+        title="Settings & Administration"
+        description="Configure your profile, notification preferences, team access levels, and sales workflow settings."
       />
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto p-1 bg-muted/60">
-          <TabsTrigger value="profile" className="gap-2">
-            <User className="h-4 w-4" /> Profile
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" /> Notifications
-          </TabsTrigger>
-          {isAdmin && (
-            <>
-              <TabsTrigger value="team" className="gap-2">
-                <Users className="h-4 w-4" /> Team Management
-              </TabsTrigger>
-              <TabsTrigger value="pipeline" className="gap-2">
-                <Workflow className="h-4 w-4" /> Pipeline Stages
-              </TabsTrigger>
-              <TabsTrigger value="tags" className="gap-2">
-                <Tag className="h-4 w-4" /> Tags & Sources
-              </TabsTrigger>
-            </>
-          )}
-        </TabsList>
+      {/* Tabbed Layout with Left Sub-Navigation */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Left Sub-Navigation Sidebar */}
+        <aside className="w-full md:w-64 shrink-0 rounded-card border bg-card p-2 shadow-sm space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isSelected = activeTab === item.id;
 
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Profile</CardTitle>
-              <CardDescription>Update your display name and view account details.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                Name: <strong className="text-foreground">{user?.name}</strong>
-              </p>
-              <p>
-                Email: <strong className="text-foreground">{user?.email}</strong>
-              </p>
-              <p>
-                Role: <strong className="text-foreground">{role}</strong>
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleTabChange(item.id)}
+                className={cn(
+                  'w-full flex items-center justify-between p-2.5 rounded-crm text-left transition-colors',
+                  isSelected
+                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Icon className={cn('h-4 w-4 shrink-0', isSelected ? 'text-primary-foreground' : 'text-muted-foreground')} />
+                  <div className="truncate">
+                    <p className="text-xs leading-none">{item.label}</p>
+                    <p
+                      className={cn(
+                        'text-[10px] mt-1 truncate leading-none',
+                        isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground/70'
+                      )}
+                    >
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
 
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
-                Configure in-app alerts and daily morning email briefings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Daily digest email: Enabled at 08:00 server time.
-            </CardContent>
-          </Card>
-        </TabsContent>
+                {item.badge && (
+                  <span
+                    className={cn(
+                      'text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full font-semibold',
+                      isSelected
+                        ? 'bg-primary-foreground/20 text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </aside>
 
-        {isAdmin && (
-          <>
-            <TabsContent value="team">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Team Management</CardTitle>
-                  <CardDescription>
-                    Invite new users, assign roles (ADMIN, MANAGER, REP), and manage statuses.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  User invitation and role-based permissions management.
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="pipeline">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pipeline Stages</CardTitle>
-                  <CardDescription>
-                    Customize stage order, win probabilities, and stage classifications.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Pipeline reordering and stage configuration.
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="tags">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tags & Lead Sources</CardTitle>
-                  <CardDescription>
-                    Manage global tags and configure marketing lead sources.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Global taxonomy and lead origin channels.
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+        {/* Right Content Area */}
+        <main className="flex-1 w-full min-w-0">
+          {activeTab === 'profile' && <ProfileSettings />}
+          {activeTab === 'notifications' && <NotificationSettings />}
+          {activeTab === 'appearance' && <AppearanceSettings />}
+          {activeTab === 'team' && canManageTeam && <TeamSettings />}
+          {activeTab === 'pipeline' && isAdmin && <PipelineSettings />}
+          {activeTab === 'tags' && canManageTeam && <TagsAndSourcesSettings />}
+          {activeTab === 'lead-capture' && isAdmin && <LeadCaptureSettings />}
+        </main>
+      </div>
     </div>
   );
 }

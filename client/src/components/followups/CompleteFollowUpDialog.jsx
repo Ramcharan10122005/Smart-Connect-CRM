@@ -130,3 +130,4 @@ export function CompleteFollowUpDialog({ open, onOpenChange, followUp }) {
     </Dialog>
   );
 }
+

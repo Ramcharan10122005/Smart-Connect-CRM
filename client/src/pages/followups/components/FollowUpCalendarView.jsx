@@ -120,3 +120,4 @@ export function FollowUpCalendarView({ followUps = [] }) {
     </div>
   );
 }
+

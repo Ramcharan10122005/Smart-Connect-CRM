@@ -14,6 +14,7 @@ import notificationRoutes from './notification.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import reportRoutes from './report.routes.js';
 import searchRoutes from './search.routes.js';
+import captureFormRoutes from './captureForm.routes.js';
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportRoutes);
 router.use('/search', searchRoutes);
+router.use('/capture-forms', captureFormRoutes);
 
 export default router;
