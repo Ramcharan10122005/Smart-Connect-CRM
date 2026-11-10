@@ -175,3 +175,4 @@ export function CompanyContactsTab({ contacts = [], company = {} }) {
 }
 
 export default CompanyContactsTab;
+
