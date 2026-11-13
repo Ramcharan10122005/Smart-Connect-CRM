@@ -36,6 +36,7 @@ export function Customer360Header({
   type = 'contact', // 'contact' | 'company'
   data = {},
   onOpenLogCall,
+  onOpenSendEmail,
   onOpenAddNote,
   onOpenScheduleFollowUp,
   onOpenCreateLead,
@@ -247,7 +248,7 @@ export function Customer360Header({
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleSendEmail}
+            onClick={onOpenSendEmail || handleSendEmail}
             className="h-8 gap-1.5 rounded-crm text-xs font-medium"
           >
             <Mail className="h-3.5 w-3.5 text-purple-600" />

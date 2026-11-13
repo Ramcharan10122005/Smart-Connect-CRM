@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard,
@@ -20,6 +20,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function Sidebar({ isMobile = false, onCloseMobile }) {
+  const location = useLocation();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { role } = useAuthStore();
 
@@ -62,13 +63,22 @@ export function Sidebar({ isMobile = false, onCloseMobile }) {
       )}
     >
       {/* Brand Header */}
-      <div className="flex h-16 items-center px-4 border-b border-border/60 justify-between">
+      <div
+        className={cn(
+          'relative flex h-16 items-center border-b border-border/60 transition-all duration-200',
+          collapsed ? 'justify-center px-2' : 'justify-between px-4'
+        )}
+      >
         <NavLink
           to="/dashboard"
           onClick={isMobile ? onCloseMobile : undefined}
-          className="flex items-center gap-3 overflow-hidden"
+          className={cn(
+            'flex items-center gap-3 overflow-hidden',
+            collapsed && 'justify-center'
+          )}
+          title="SmartConnect CRM"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-crm bg-primary text-primary-foreground shadow-subtle">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-crm bg-primary text-primary-foreground shadow-subtle hover:opacity-90 transition-opacity">
             <Layers className="h-5 w-5" />
           </div>
           {(!collapsed || isMobile) && (
@@ -81,49 +91,63 @@ export function Sidebar({ isMobile = false, onCloseMobile }) {
           )}
         </NavLink>
 
-        {!isMobile && (
+        {!isMobile && !collapsed && (
           <button
             type="button"
             onClick={toggleSidebar}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="flex h-7 w-7 items-center justify-center rounded-crm border border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Collapse sidebar"
+            className="flex h-7 w-7 items-center justify-center rounded-crm border border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
           >
-            {collapsed ? (
-              <ChevronRight className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronLeft className="h-3.5 w-3.5" />
-            )}
+            <ChevronLeft className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
+
+      {/* Collapse Toggle when Sidebar is Collapsed (Floats cleanly on border divider below header) */}
+      {!isMobile && collapsed && (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Expand sidebar"
+          className="absolute -right-3 top-20 z-30 flex h-6 w-6 items-center justify-center rounded-full border border-border/80 bg-card text-muted-foreground shadow-md hover:scale-110 hover:border-primary/50 hover:text-foreground transition-all duration-200"
+          title="Expand sidebar"
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      )}
 
       {/* Navigation Links */}
       <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const isItemActive =
+            item.to === '/dashboard'
+              ? location.pathname === '/dashboard' || location.pathname === '/'
+              : location.pathname.startsWith(item.to);
 
           const linkContent = (
             <NavLink
-              key={item.to}
               to={item.to}
               onClick={isMobile ? onCloseMobile : undefined}
-              className={({ isActive }) =>
+              className={() =>
                 cn(
-                  'group flex items-center rounded-crm px-3 py-2.5 text-xs font-medium transition-all duration-150',
-                  isActive
+                  'group relative flex items-center transition-all duration-150',
+                  collapsed && !isMobile
+                    ? 'h-10 w-10 mx-auto justify-center rounded-crm'
+                    : 'w-full rounded-crm px-3 py-2.5 text-xs font-medium justify-between',
+                  isItemActive
                     ? 'bg-primary text-primary-foreground shadow-subtle'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  collapsed && !isMobile ? 'justify-center px-0' : 'justify-between'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )
               }
             >
-              {({ isActive }) => (
+              {() => (
                 <>
-                  <div className="flex items-center gap-3">
+                  <div className={cn('flex items-center', collapsed && !isMobile ? 'justify-center' : 'gap-3')}>
                     <Icon
                       className={cn(
                         'h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-105',
-                        isActive
+                        isItemActive
                           ? 'text-primary-foreground'
                           : 'text-muted-foreground group-hover:text-foreground'
                       )}
@@ -136,7 +160,7 @@ export function Sidebar({ isMobile = false, onCloseMobile }) {
                       className={cn(
                         'flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tracking-tight shadow-sm',
                         item.badgeVariant === 'destructive'
-                          ? isActive
+                          ? isItemActive
                             ? 'bg-rose-500 text-white'
                             : 'bg-rose-600 text-white'
                           : 'bg-muted text-muted-foreground'
@@ -147,7 +171,7 @@ export function Sidebar({ isMobile = false, onCloseMobile }) {
                   )}
 
                   {item.badge && collapsed && !isMobile && (
-                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-600" />
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-600 ring-2 ring-card" />
                   )}
                 </>
               )}
@@ -168,7 +192,7 @@ export function Sidebar({ isMobile = false, onCloseMobile }) {
             );
           }
 
-          return linkContent;
+          return <div key={item.to}>{linkContent}</div>;
         })}
       </nav>
 

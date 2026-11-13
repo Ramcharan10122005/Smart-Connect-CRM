@@ -54,6 +54,16 @@ export const queryKeys = {
   tags: {
     all: ['tags'],
   },
+  emailTemplates: {
+    all: ['emailTemplates'],
+    list: () => ['emailTemplates', 'list'],
+    detail: (id) => ['emailTemplates', 'detail', id],
+  },
+  automations: {
+    all: ['automations'],
+    rules: () => ['automations', 'rules'],
+    logs: (params) => ['automations', 'logs', params],
+  },
   activities: {
     all: ['activities'],
     list: (params) => ['activities', 'list', params],

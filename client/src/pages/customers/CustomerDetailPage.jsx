@@ -27,6 +27,7 @@ import { ScheduleFollowUpDialog } from './components/360/ScheduleFollowUpDialog'
 import { CreateLeadDialog } from './components/360/CreateLeadDialog';
 import { ContactSheet } from './components/ContactSheet';
 import { CompanySheet } from './components/CompanySheet';
+import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 
 export default function CustomerDetailPage() {
   const { type = 'contact', id } = useParams();
@@ -40,6 +41,7 @@ export default function CustomerDetailPage() {
   const [scheduleFollowUpOpen, setScheduleFollowUpOpen] = useState(false);
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [emailComposerOpen, setEmailComposerOpen] = useState(false);
 
   // Active Tab State
   const [activeTab, setActiveTab] = useState('timeline');
@@ -142,6 +144,7 @@ export default function CustomerDetailPage() {
         type={type}
         data={record}
         onOpenLogCall={() => setLogCallOpen(true)}
+        onOpenSendEmail={() => setEmailComposerOpen(true)}
         onOpenAddNote={() => setAddNoteOpen(true)}
         onOpenScheduleFollowUp={() => setScheduleFollowUpOpen(true)}
         onOpenCreateLead={() => setCreateLeadOpen(true)}
@@ -312,6 +315,14 @@ export default function CustomerDetailPage() {
           company={record}
         />
       )}
+
+      {/* 5. Email Composer Dialog */}
+      <EmailComposerModal
+        open={emailComposerOpen}
+        onOpenChange={setEmailComposerOpen}
+        contact={isContact ? record : null}
+        defaultTo={!isContact && record.contacts?.[0]?.email ? record.contacts[0].email : ''}
+      />
     </div>
   );
 }

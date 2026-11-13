@@ -242,7 +242,18 @@ export function startScheduler() {
     });
   });
 
-  activeCronTasks = [reminderTask, unsnoozeTask, digestTask];
+  // 4. Every hour: Check stale leads & overdue follow-ups automations
+  const automationTask = cron.schedule('0 * * * *', async () => {
+    logger.info('[Scheduler: Automations] Checking hourly stale lead & overdue follow-up automations...');
+    try {
+      const { runScheduledAutomations } = await import('../services/automation.service.js');
+      await runScheduledAutomations();
+    } catch (err) {
+      logger.error({ err }, '[Scheduler: Automations] Job execution failed');
+    }
+  });
+
+  activeCronTasks = [reminderTask, unsnoozeTask, digestTask, automationTask];
   return activeCronTasks;
 }
 

@@ -18,6 +18,26 @@ export const authLimiter = rateLimit({
   },
 });
 
+export const emailSendLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: env.NODE_ENV === 'test' ? 1000 : 50, // 50 emails per hour
+  keyGenerator: (req) => req.user?.id || req.ip,
+  validate: { keyGeneratorIpFallback: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    data: null,
+    error: {
+      message: 'Email sending rate limit exceeded. You can send up to 50 emails per hour.',
+      code: 'EMAIL_RATE_LIMIT_EXCEEDED',
+      details: null,
+    },
+    meta: {},
+  },
+});
+
 export default {
   authLimiter,
+  emailSendLimiter,
 };

@@ -95,8 +95,8 @@ export async function getActivities(query) {
 
   if (query.dateFrom || query.dateTo) {
     where.occurredAt = {};
-    if (query.dateFrom) where.occurredAt.gte = query.dateFrom;
-    if (query.dateTo) where.occurredAt.lte = query.dateTo;
+    if (query.dateFrom) where.occurredAt.gte = new Date(query.dateFrom);
+    if (query.dateTo) where.occurredAt.lte = new Date(query.dateTo);
   }
 
   if (search) {

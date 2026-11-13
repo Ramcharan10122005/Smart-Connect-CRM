@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   Phone,
   Mail,
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ACTIVITY_TYPE_CONFIG = {
   CALL: {
@@ -75,28 +77,33 @@ export default function ActivitiesPage() {
 
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [userFilter, setUserFilter] = useState('ALL');
   const [dateRange, setDateRange] = useState('30d'); // 'today' | '7d' | '30d' | 'all'
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Compute dateFrom based on range
-  const getDateFrom = (range) => {
-    const now = new Date();
-    if (range === 'today') {
-      now.setHours(0, 0, 0, 0);
-      return now.toISOString();
+  // Compute dateFrom based on range, memoized to prevent infinite query loops
+  const dateFrom = useMemo(() => {
+    if (dateRange === 'today') {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
     }
-    if (range === '7d') {
-      now.setDate(now.getDate() - 7);
-      return now.toISOString();
+    if (dateRange === '7d') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
     }
-    if (range === '30d') {
-      now.setDate(now.getDate() - 30);
-      return now.toISOString();
+    if (dateRange === '30d') {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
     }
     return undefined;
-  };
+  }, [dateRange]);
 
   // 1. Fetch Users
   const { data: usersData } = useQuery({
@@ -105,18 +112,28 @@ export default function ActivitiesPage() {
       const res = await api.get('/users?limit=100');
       return res.data?.data || [];
     },
+    enabled: role === 'ADMIN' || role === 'MANAGER',
   });
 
-  // 2. Fetch Activities Feed
-  const queryParams = {
-    limit: 100,
-    search: search || undefined,
-    type: typeFilter !== 'ALL' ? typeFilter : undefined,
-    createdById: userFilter !== 'ALL' ? userFilter : undefined,
-    dateFrom: getDateFrom(dateRange),
-  };
+  // 2. Fetch Activities Feed (memoize params to ensure stable queryKey)
+  const queryParams = useMemo(
+    () => ({
+      limit: 100,
+      search: debouncedSearch || undefined,
+      type: typeFilter !== 'ALL' ? typeFilter : undefined,
+      createdById: userFilter !== 'ALL' ? userFilter : undefined,
+      dateFrom,
+    }),
+    [debouncedSearch, typeFilter, userFilter, dateFrom]
+  );
 
-  const { data: activitiesData, isLoading } = useQuery({
+  const {
+    data: activitiesData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: queryKeys.activities.list(queryParams),
     queryFn: async () => {
       const cleanParams = Object.fromEntries(
@@ -283,10 +300,59 @@ export default function ActivitiesPage() {
 
       {/* Global Activity Feed */}
       {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 rounded-card border bg-card p-4 animate-pulse" />
-          ))}
+        <div className="space-y-6">
+          <div className="space-y-3">
+            {/* Day Header Skeleton */}
+            <div className="flex items-center gap-2 px-1">
+              <Skeleton className="h-2 w-2 rounded-full" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-8" />
+            </div>
+
+            {/* Items in Day Skeleton */}
+            <div className="divide-y divide-border rounded-card border bg-card shadow-sm overflow-hidden">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <Skeleton className="h-8 w-8 rounded-crm shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Skeleton className="h-4 w-48 max-w-full" />
+                          <Skeleton className="h-4 w-14 rounded-full" />
+                          <Skeleton className="h-4 w-16 rounded-full" />
+                        </div>
+                        <Skeleton className="h-3 w-36" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pl-11 pr-4">
+                    <Skeleton className="h-10 w-full rounded-crm" />
+                  </div>
+                  <div className="flex items-center gap-2 pl-11">
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                    <Skeleton className="h-5 w-28 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : isError ? (
+        <div className="rounded-card border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 p-8 text-center">
+          <ShieldAlert className="mx-auto h-10 w-10 text-rose-500 mb-3" />
+          <h4 className="font-semibold text-sm text-foreground">Failed to load activity stream</h4>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+            {error?.response?.data?.error?.message || error?.message || 'An error occurred while loading activities.'}
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => refetch()}
+            className="mt-4 h-8 text-xs"
+          >
+            Retry
+          </Button>
         </div>
       ) : sortedDayKeys.length === 0 ? (
         <div className="rounded-card border border-dashed bg-card/50 p-12 text-center">

@@ -64,6 +64,22 @@ enum Recurrence {
   MONTHLY
 }
 
+enum AutomationTrigger {
+  LEAD_CREATED
+  LEAD_STAGE_CHANGED
+  LEAD_STALE_IN_STAGE
+  FOLLOWUP_OVERDUE
+  CONTACT_CREATED
+}
+
+enum AutomationAction {
+  CREATE_FOLLOWUP
+  SEND_EMAIL_TEMPLATE
+  ASSIGN_OWNER
+  ADD_TAG
+  NOTIFY_USER
+}
+
 // -------------------------------------------------------------
 // MODELS
 // -------------------------------------------------------------
@@ -96,6 +112,9 @@ model User {
   stageChanges            LeadStageHistory[]    @relation("LeadStageChangedBy")
   passwordResetTokens     PasswordResetToken[]
   ownedCaptureForms       CaptureForm[]         @relation("CaptureFormDefaultOwner")
+  createdTemplates        EmailTemplate[]       @relation("TemplateCreator")
+  sentEmailLogs           EmailLog[]            @relation("EmailLogSender")
+  createdRules            AutomationRule[]      @relation("RuleCreator")
 }
 
 model PasswordResetToken {
@@ -160,6 +179,8 @@ model Contact {
   linkedinUrl     String?
   notes           String?        @db.Text
   lastContactedAt DateTime?
+  emailOptOut     Boolean        @default(false)
+  optOutAt        DateTime?
   deletedAt       DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -172,6 +193,7 @@ model Contact {
   activities      Activity[]
   followUps       FollowUp[]
   tags            ContactTag[]
+  emailLogs       EmailLog[]
 
   @@index([email])
   @@index([companyId])
@@ -281,6 +303,7 @@ model Lead {
   stageHistory       LeadStageHistory[]
   activities         Activity[]
   followUps          FollowUp[]
+  emailLogs          EmailLog[]
 
   @@index([stageId])
   @@index([ownerId])
@@ -415,4 +438,82 @@ model CaptureForm {
 
   @@index([defaultSourceId])
   @@index([defaultOwnerId])
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  subject     String
+  body        String   @db.Text
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User?    @relation("TemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdById])
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  to        String
+  subject   String
+  body      String?  @db.Text
+  status    String   // 'SENT' or 'FAILED'
+  error     String?  @db.Text
+  sentById  String?
+  contactId String?
+  leadId    String?
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  sentBy    User?    @relation("EmailLogSender", fields: [sentById], references: [id], onDelete: SetNull)
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead      Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([sentById])
+  @@index([contactId])
+  @@index([leadId])
+  @@index([sentAt])
+  @@index([status])
+}
+
+model AutomationRule {
+  id           String            @id @default(uuid())
+  name         String
+  isActive     Boolean           @default(true)
+  trigger      AutomationTrigger
+  conditions   Json              @default("{}")
+  action       AutomationAction
+  actionConfig Json              @default("{}")
+  createdById  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  createdBy    User?             @relation("RuleCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  logs         AutomationLog[]
+
+  @@index([trigger])
+  @@index([isActive])
+  @@index([createdById])
+}
+
+model AutomationLog {
+  id         String         @id @default(uuid())
+  ruleId     String
+  entityType String         // 'Lead', 'Contact', 'FollowUp'
+  entityId   String
+  status     String         // 'SUCCESS', 'FAILED', 'SKIPPED'
+  result     Json?
+  error      String?        @db.Text
+  executedAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  rule       AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([entityType, entityId])
+  @@index([ruleId, entityType, entityId])
+  @@index([status])
+  @@index([executedAt])
 }

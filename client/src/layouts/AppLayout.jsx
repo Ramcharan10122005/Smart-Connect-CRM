@@ -8,12 +8,19 @@ import { LogActivityModal } from '@/components/activities/LogActivityModal';
 import { FollowUpModal } from '@/components/followups/FollowUpModal';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { KeyboardShortcutsModal } from '@/components/common/KeyboardShortcutsModal';
+import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts';
 
 export function AppLayout() {
   const { mobileSidebarOpen, setMobileSidebarOpen } = useUIStore();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
-  // Keyboard shortcut: Cmd/Ctrl + K
+  // Global shortcuts (?, Cmd+K, N then C, N then L)
+  useGlobalShortcuts({ onOpenShortcuts: () => setShortcutsOpen(true) });
+
+  // Keyboard shortcut: Cmd/Ctrl + K fallback
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -44,14 +51,19 @@ export function AppLayout() {
         <div className="flex flex-1 flex-col min-w-0">
           <TopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
-          {/* Page Container */}
+          {/* Page Container wrapped with ErrorBoundary */}
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
 
         {/* Global Command Palette */}
         <CommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
+
+        {/* Global Keyboard Shortcuts Cheat Sheet */}
+        <KeyboardShortcutsModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
         {/* Global Modals */}
         <LogActivityModal />

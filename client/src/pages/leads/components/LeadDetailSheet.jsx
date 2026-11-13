@@ -14,6 +14,7 @@ import {
   Check,
   ThumbsDown,
   Info,
+  Mail,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -31,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { LostReasonDialog } from './LostReasonDialog';
+import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 
 export function LeadDetailSheet({ open, onOpenChange, leadId, onDeleted }) {
   const navigate = useNavigate();
@@ -38,6 +40,7 @@ export function LeadDetailSheet({ open, onOpenChange, leadId, onDeleted }) {
 
   // Active section in detail: 'timeline' | 'followups'
   const [activeTab, setActiveTab] = useState('timeline');
+  const [emailComposerOpen, setEmailComposerOpen] = useState(false);
 
   // Dialog triggers
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -256,6 +259,18 @@ export function LeadDetailSheet({ open, onOpenChange, leadId, onDeleted }) {
 
                   {/* Actions Bar */}
                   <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Send Email */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEmailComposerOpen(true)}
+                      className="h-8 gap-1.5 text-xs rounded-crm font-medium"
+                    >
+                      <Mail className="h-3.5 w-3.5 text-purple-600" />
+                      <span>Send Email</span>
+                    </Button>
+
                     {/* Convert to Customer */}
                     <Button
                       type="button"
@@ -571,6 +586,16 @@ export function LeadDetailSheet({ open, onOpenChange, leadId, onDeleted }) {
           await deleteMutation.mutateAsync();
         }}
       />
+
+      {/* Email Composer Modal */}
+      {lead && (
+        <EmailComposerModal
+          open={emailComposerOpen}
+          onOpenChange={setEmailComposerOpen}
+          lead={lead}
+          contact={lead.contact || lead.convertedContact}
+        />
+      )}
     </>
   );
 }

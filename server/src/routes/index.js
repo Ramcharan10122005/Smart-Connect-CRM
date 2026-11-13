@@ -15,6 +15,9 @@ import dashboardRoutes from './dashboard.routes.js';
 import reportRoutes from './report.routes.js';
 import searchRoutes from './search.routes.js';
 import captureFormRoutes from './captureForm.routes.js';
+import emailTemplateRoutes from './emailTemplate.routes.js';
+import emailSendRoutes from './emailSend.routes.js';
+import automationRoutes from './automation.routes.js';
 
 const router = Router();
 
@@ -37,5 +40,8 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportRoutes);
 router.use('/search', searchRoutes);
 router.use('/capture-forms', captureFormRoutes);
+router.use('/email-templates', emailTemplateRoutes);
+router.use('/emails', emailSendRoutes);
+router.use('/automations', automationRoutes);
 
 export default router;

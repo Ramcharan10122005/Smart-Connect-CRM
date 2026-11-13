@@ -8,6 +8,8 @@ import {
   Tag,
   Globe,
   Palette,
+  Mail,
+  Zap,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
@@ -19,6 +21,8 @@ import { PipelineSettings } from './components/PipelineSettings';
 import { TagsAndSourcesSettings } from './components/TagsAndSourcesSettings';
 import { LeadCaptureSettings } from './components/LeadCaptureSettings';
 import { AppearanceSettings } from './components/AppearanceSettings';
+import { EmailTemplatesSettings } from './components/EmailTemplatesSettings';
+import { AutomationsSettings } from './components/AutomationsSettings';
 
 export default function SettingsPage() {
   const location = useLocation();
@@ -87,6 +91,22 @@ export default function SettingsPage() {
       description: 'Labels & lead channels',
       icon: Tag,
       visible: canManageTeam,
+    },
+    {
+      id: 'templates',
+      label: 'Email Templates',
+      description: 'Canned emails & variables',
+      icon: Mail,
+      visible: canManageTeam,
+      badge: isManager ? 'Manager' : undefined,
+    },
+    {
+      id: 'automations',
+      label: 'Automations',
+      description: 'Rules & background triggers',
+      icon: Zap,
+      visible: canManageTeam,
+      badge: isManager ? 'Manager' : undefined,
     },
     {
       id: 'lead-capture',
@@ -171,6 +191,8 @@ export default function SettingsPage() {
           {activeTab === 'team' && canManageTeam && <TeamSettings />}
           {activeTab === 'pipeline' && isAdmin && <PipelineSettings />}
           {activeTab === 'tags' && canManageTeam && <TagsAndSourcesSettings />}
+          {activeTab === 'templates' && canManageTeam && <EmailTemplatesSettings />}
+          {activeTab === 'automations' && canManageTeam && <AutomationsSettings />}
           {activeTab === 'lead-capture' && isAdmin && <LeadCaptureSettings />}
         </main>
       </div>

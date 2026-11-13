@@ -12,9 +12,11 @@ const emailsDir = path.join(__dirname, '../views/emails');
 let transporter;
 
 if (env.SMTP_HOST && env.SMTP_USER) {
+  const isSecure = Number(env.SMTP_PORT) === 465;
   transporter = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: env.SMTP_PORT || 587,
+    secure: isSecure,
     auth: {
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
@@ -39,11 +41,12 @@ export async function renderTemplate(templateName, data = {}) {
   return fullHtml;
 }
 
-export async function sendEmail({ to, subject, html, text }) {
-  if (!transporter) {
+export async function sendEmail({ to, subject, html, text, replyTo }) {
+  if (!transporter || env.NODE_ENV === 'test') {
     logger.info(
       {
         to,
+        replyTo,
         subject,
         textSnippet: text
           ? text.substring(0, 150)
@@ -52,7 +55,7 @@ export async function sendEmail({ to, subject, html, text }) {
               .trim()
               .substring(0, 150),
       },
-      '[Mailer: Simulated Delivery (No SMTP configured)]'
+      '[Mailer: Simulated Delivery (No SMTP configured or test mode)]'
     );
     return { messageId: 'simulated-delivery' };
   }
@@ -60,6 +63,7 @@ export async function sendEmail({ to, subject, html, text }) {
   try {
     const info = await transporter.sendMail({
       from: env.MAIL_FROM,
+      replyTo,
       to,
       subject,
       text,

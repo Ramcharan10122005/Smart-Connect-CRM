@@ -268,6 +268,14 @@ export async function createContact(data, user) {
     meta: { name: `${contact.firstName} ${contact.lastName}`, email: contact.email, ownerId },
   });
 
+  // Trigger automations for CONTACT_CREATED
+  try {
+    const { triggerEvent } = await import('./automation.service.js');
+    await triggerEvent('CONTACT_CREATED', 'Contact', contact, { user });
+  } catch (autoErr) {
+    logger.error({ autoErr }, 'Automation execution failed for CONTACT_CREATED');
+  }
+
   return contact;
 }
 

@@ -14,3 +14,4 @@ router.get('/', requireRole('ADMIN'), asyncHandler(captureFormController.getCapt
 router.patch('/:id', requireRole('ADMIN'), asyncHandler(captureFormController.updateCaptureForm));
 
 export default router;
+

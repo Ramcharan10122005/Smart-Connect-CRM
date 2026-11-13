@@ -283,6 +283,14 @@ export async function createLead(data, user) {
     }
   }
 
+  // Trigger automations for LEAD_CREATED
+  try {
+    const { triggerEvent } = await import('./automation.service.js');
+    await triggerEvent('LEAD_CREATED', 'Lead', lead, { user });
+  } catch (autoErr) {
+    logger.error({ autoErr }, 'Automation execution failed for LEAD_CREATED');
+  }
+
   return lead;
 }
 
@@ -450,6 +458,20 @@ export async function moveLeadStage(id, { stageId, lostReason }, user) {
       lostReason: updatedLostReason,
     },
   });
+
+  // Trigger automations for LEAD_STAGE_CHANGED
+  try {
+    const { triggerEvent } = await import('./automation.service.js');
+    await triggerEvent('LEAD_STAGE_CHANGED', 'Lead', updatedLead, {
+      fromStageId: lead.stage.id,
+      toStageId: targetStage.id,
+      stageType: targetStage.type,
+      toStage: targetStage,
+      user,
+    });
+  } catch (autoErr) {
+    logger.error({ autoErr }, 'Automation execution failed for LEAD_STAGE_CHANGED');
+  }
 
   return updatedLead;
 }

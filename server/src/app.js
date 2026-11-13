@@ -13,6 +13,8 @@ import expressLayouts from 'express-ejs-layouts';
 import apiRouter from './routes/index.js';
 import publicRoutes from './routes/public.routes.js';
 import printRoutes from './routes/print.routes.js';
+import * as emailSendController from './controllers/emailSend.controller.js';
+import { asyncHandler } from './utils/asyncHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { ApiError } from './utils/ApiError.js';
 
@@ -47,7 +49,7 @@ if (env.NODE_ENV === 'development') {
 // 5. Global Rate Limiting
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: env.NODE_ENV === 'test' ? 10000 : 1000, // 1000 requests per 15 min per IP
+  max: env.NODE_ENV === 'test' || env.NODE_ENV === 'development' ? 100000 : 1000, // 1000 requests per 15 min per IP
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -78,6 +80,7 @@ app.set('layout', 'layouts/main');
 // 8. Public Web Pages & Print Views
 app.use('/capture', publicRoutes);
 app.use('/print', printRoutes);
+app.get('/unsubscribe/:token', asyncHandler(emailSendController.handleUnsubscribe));
 
 // 9. API v1 Router Mount
 app.use('/api/v1', apiRouter);

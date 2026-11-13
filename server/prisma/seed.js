@@ -17,6 +17,10 @@ async function main() {
     // Delete in reverse order of foreign key dependencies
     await prisma.auditLog.deleteMany({});
     await prisma.notification.deleteMany({});
+    await prisma.automationLog.deleteMany({});
+    await prisma.automationRule.deleteMany({});
+    await prisma.emailLog.deleteMany({});
+    await prisma.emailTemplate.deleteMany({});
     await prisma.followUp.deleteMany({});
     await prisma.activity.deleteMany({});
     await prisma.leadStageHistory.deleteMany({});

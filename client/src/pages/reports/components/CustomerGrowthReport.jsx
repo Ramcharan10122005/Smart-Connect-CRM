@@ -202,3 +202,4 @@ export function CustomerGrowthReport({ data = {}, isLoading = false }) {
     </div>
   );
 }
+
