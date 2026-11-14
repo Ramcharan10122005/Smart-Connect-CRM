@@ -29,8 +29,12 @@ export function NotificationsMenu() {
     queryKey: queryKeys.notifications.list({ limit: 5 }),
     queryFn: async () => {
       const res = await api.get('/notifications?limit=5');
-      return res.data?.data?.items || [];
+      const data = res.data?.data;
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.items)) return data.items;
+      return [];
     },
+    refetchInterval: 30000,
   });
 
   // Mutation: mark single read
@@ -55,6 +59,13 @@ export function NotificationsMenu() {
 
   const unreadCount = countData || 0;
   const notifications = notificationsData || [];
+
+  const isNotificationUnread = (item) => {
+    if (typeof item.read === 'boolean') {
+      return !item.read;
+    }
+    return !item.readAt;
+  };
 
   return (
     <DropdownMenu>
@@ -109,48 +120,54 @@ export function NotificationsMenu() {
               <p className="text-[11px] text-muted-foreground mt-0.5">No new notifications.</p>
             </div>
           ) : (
-            notifications.map((item) => (
-              <div
-                key={item.id}
-                className={`p-3.5 text-xs transition-colors hover:bg-muted/50 ${
-                  !item.read ? 'bg-primary/5' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1">
-                    <p
-                      className={`font-medium ${!item.read ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}
-                    >
-                      {item.title}
-                    </p>
-                    <p className="text-muted-foreground line-clamp-2 leading-relaxed">
-                      {item.body}
-                    </p>
-                    <div className="flex items-center gap-2 pt-1 text-[10px] text-muted-foreground">
-                      <span>{formatDate(item.createdAt, 'relative')}</span>
-                      {item.link && (
-                        <Link
-                          to={item.link}
-                          onClick={() => !item.read && markReadMutation.mutate(item.id)}
-                          className="inline-flex items-center text-primary hover:underline font-medium"
-                        >
-                          View <ExternalLink className="ml-0.5 h-2.5 w-2.5" />
-                        </Link>
-                      )}
+            notifications.map((item) => {
+              const isUnread = isNotificationUnread(item);
+              return (
+                <div
+                  key={item.id}
+                  className={`p-3.5 text-xs transition-colors hover:bg-muted/50 ${
+                    isUnread ? 'bg-primary/5' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <p
+                        className={`font-medium ${isUnread ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}
+                      >
+                        {item.title}
+                      </p>
+                      <p className="text-muted-foreground line-clamp-2 leading-relaxed">
+                        {item.body}
+                      </p>
+                      <div className="flex items-center gap-2 pt-1 text-[10px] text-muted-foreground">
+                        <span>{formatDate(item.createdAt, 'relative')}</span>
+                        {item.link && (
+                          <Link
+                            to={item.link}
+                            onClick={() => isUnread && markReadMutation.mutate(item.id)}
+                            className="inline-flex items-center text-primary hover:underline font-medium"
+                          >
+                            View <ExternalLink className="ml-0.5 h-2.5 w-2.5" />
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {!item.read && (
-                    <button
-                      type="button"
-                      title="Mark as read"
-                      onClick={() => markReadMutation.mutate(item.id)}
-                      className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1 hover:ring-2 hover:ring-primary/40"
-                    />
-                  )}
+                    {isUnread && (
+                      <button
+                        type="button"
+                        title="Mark as read"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markReadMutation.mutate(item.id);
+                        }}
+                        className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1 hover:ring-2 hover:ring-primary/40"
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </DropdownMenuContent>

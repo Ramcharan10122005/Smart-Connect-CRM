@@ -4,6 +4,7 @@ import { scopeByOwner } from '../utils/scope.js';
 import { parsePaginationParams, buildPaginationMeta } from '../utils/queryHelper.js';
 import { createAuditLog } from './audit.service.js';
 import { parseCSV } from '../utils/csv.js';
+import { logger } from '../utils/logger.js';
 
 export function buildContactWhereClause(query, user) {
   const where = {

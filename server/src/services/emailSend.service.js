@@ -27,7 +27,7 @@ export function verifyUnsubscribeToken(token) {
       throw new Error('Invalid token type');
     }
     return payload;
-  } catch (err) {
+  } catch {
     throw ApiError.badRequest('Invalid or expired unsubscribe link');
   }
 }
@@ -176,7 +176,7 @@ export function buildStyledEmailHtml({ subject, body, sender, unsubscribeUrl }) 
 }
 
 export async function sendUserEmail(data, user) {
-  const { to, subject, body, contactId, leadId, templateId } = data;
+  const { to, subject, body, contactId, leadId } = data;
 
   // 1. Resolve Contact and Lead to verify opt-out and provide template variables
   let contact = null;

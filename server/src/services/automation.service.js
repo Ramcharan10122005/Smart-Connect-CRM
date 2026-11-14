@@ -2,7 +2,6 @@ import prisma from '../config/prisma.js';
 import { ApiError } from '../utils/ApiError.js';
 import { createAuditLog } from './audit.service.js';
 import { renderTemplateVariables } from '../utils/templateRenderer.js';
-import * as activityService from './activity.service.js';
 import * as emailSendService from './emailSend.service.js';
 import { parsePaginationParams, buildPaginationMeta } from '../utils/queryHelper.js';
 
@@ -88,10 +87,6 @@ export async function hasAlreadyExecuted(rule, entityType, entityId, record = {}
   // General idempotency check: only fire once per record & rule
   const count = await prisma.automationLog.count({ where });
   return count > 0;
-}
-
-function recordStageId(record) {
-  return record.stageId || record.stage?.id || null;
 }
 
 /**
@@ -209,7 +204,7 @@ export async function executeRule(rule, entityType, record, context = {}, execut
 /**
  * Performs the specific action configured in the rule
  */
-async function performAction(rule, entityType, record, context, nextChain) {
+async function performAction(rule, entityType, record, context, _nextChain) {
   const config = rule.actionConfig || {};
 
   switch (rule.action) {

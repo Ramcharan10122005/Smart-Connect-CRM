@@ -39,9 +39,14 @@ export async function getNotifications(query, user) {
     prisma.notification.count({ where }),
   ]);
 
+  const formattedNotifications = notifications.map((n) => ({
+    ...n,
+    read: Boolean(n.readAt),
+  }));
+
   const meta = buildPaginationMeta(total, page, limit);
 
-  return { notifications, meta };
+  return { notifications: formattedNotifications, meta };
 }
 
 export async function getUnreadCount(userId) {
@@ -68,15 +73,17 @@ export async function markAsRead(id, userId) {
   }
 
   if (notification.readAt) {
-    return notification;
+    return { ...notification, read: true };
   }
 
-  return prisma.notification.update({
+  const updated = await prisma.notification.update({
     where: { id },
     data: {
       readAt: new Date(),
     },
   });
+
+  return { ...updated, read: true };
 }
 
 export async function markAllAsRead(userId) {
