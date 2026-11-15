@@ -64,55 +64,7 @@
 ---
 
 ## 4. System Architecture & Data Flow
-
-### Architecture Overview
-```mermaid
-graph TD
-    User([Sales Rep / Manager / Admin])
-    Guest([Inbound Web Prospect])
-
-    subgraph Client Layer
-        SPA["React 18 Single Page Application<br/>(Tailwind CSS + TanStack Query + Zustand)"]
-    end
-
-    subgraph Server Layer - Express Application
-        Proxy["Vite Dev Proxy / Express Routing"]
-        AuthM["Auth & RBAC Middleware (JWT Cookie)"]
-        ValM["Zod Schema Validation Middleware"]
-        Controller["Controller Layer (Envelopes)"]
-        Service["Service Layer (Business Logic & Audit)"]
-        Views["EJS Server-Rendered Views Engine"]
-    end
-
-    subgraph Background Processing
-        Scheduler["Scheduler (node-cron)<br/>Reminders & Digests"]
-        AutoEngine["Automation Engine<br/>Triggers, Rules & Loop Guard"]
-        Mailer["Nodemailer (SMTP)"]
-    end
-
-    subgraph Persistence Layer
-        Prisma["Prisma ORM Client"]
-        Database[("PostgreSQL Database")]
-    end
-
-    User -->|Interacts via Browser| SPA
-    Guest -->|Submits Lead Form| Views
-    SPA -->|RESTful JSON API Requests| Proxy
-    Proxy --> AuthM
-    AuthM --> ValM
-    ValM --> Controller
-    Controller --> Service
-    Service --> Prisma
-    Prisma --> Database
-
-    Views --> Prisma
-    Scheduler --> Service
-    Service --> AutoEngine
-    AutoEngine --> Mailer
-    Service --> Mailer
-    AutoEngine --> Prisma
-```
-
+---
 ### Data Flow Sequence (Example: Lead Stage Update)
 ```mermaid
 sequenceDiagram
