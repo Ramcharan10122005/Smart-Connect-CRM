@@ -339,30 +339,6 @@ High-resolution visual evidence of each core view is preserved in [results/scree
 | **Admin Settings & Automations** | [13-settings.png](results/screenshots/13-settings.png) | Full administrative panel showing Team, Pipeline, Automations, and Template builders. |
 | **Rep Restricted RBAC View** | [14-rep-restricted-access.png](results/screenshots/14-rep-restricted-access.png) | Representative account proving role boundary enforcement (admin tabs stripped). |
 
----
 
-## 11. Academic Presentation & Slide Deck
 
-For project defenses, seminars, and evaluator reviews, presentation assets are available in three complementary formats:
-- **PowerPoint Slide Deck (.pptx)**: [SmartConnect_CRM_Presentation.pptx](docs/SmartConnect_CRM_Presentation.pptx) — 14 widescreen (16:9) slides featuring embedded real application screenshots, architecture diagrams, and test results.
-- **Interactive Web Slide Deck (.html)**: [presentation.html](docs/presentation.html) — Standalone offline slide presentation runnable in any modern web browser with keyboard arrow navigation, slide counters, and fullscreen toggle.
-- **Presentation Transcript & Viva Defense Prep (.md)**: [PRESENTATION.md](docs/PRESENTATION.md) — Marp-compatible Markdown slide deck accompanied by slide-by-slide speaker notes, talking points, and frequently asked academic defense questions.
 
----
-
-## 12. Project Team Members
-
-| Name | Roll / Registration Number | Contribution / Role |
-| :--- | :--- | :--- |
-| **Kundena Ramcharan** | 202311047 | Full-Stack Architecture & Security |
-| **Nambaru Lehari** | 202311056 | Frontend Engineering & UI Systems |
-| **Bhogi Sharan sai** | 202311022 | Database Design & Automations |
-| **Harshavardhan** | 202311091 | Integration Testing & Analytics |
-
-* **GitHub Repository:** [https://github.com/Ramcharan10122005/Smart-Connect-CRM](https://github.com/Ramcharan10122005/Smart-Connect-CRM)
-
----
-
-## 13. License
-
-This project is licensed under the terms of the [MIT License](LICENSE).
