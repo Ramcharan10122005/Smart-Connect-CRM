@@ -46,7 +46,7 @@ function MiniSparkline({ data = [], color = '#4F46E5', isPositive = true }) {
   );
 }
 
-export function KpiCardsRow({ summary, isLoading = false }) {
+export function KpiCardsRow({ summary, range = '30d', isLoading = false }) {
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -76,11 +76,27 @@ export function KpiCardsRow({ summary, isLoading = false }) {
     overdueFollowUps = 0,
   } = summary || {};
 
+  const rangeLabels = {
+    '7d': '7-day',
+    '30d': '30-day',
+    '90d': '90-day',
+    '12m': '12-month',
+  };
+  const wonTitleMap = {
+    '7d': 'Won (7 Days)',
+    '30d': 'Won (30 Days)',
+    '90d': 'Won (90 Days)',
+    '12m': 'Won (12 Months)',
+  };
+  const wonTitle = wonTitleMap[range] || 'Won Revenue';
+  const rangeLabel = rangeLabels[range] || 'Period';
+  const growthSubtitle = range === '30d' ? 'vs last mo' : 'vs prior period';
+
   const cards = [
     {
       title: 'Total Customers',
       value: totalCustomers.toLocaleString(),
-      subtitle: `${customerGrowthRate >= 0 ? '+' : ''}${customerGrowthRate}% vs last mo`,
+      subtitle: `${customerGrowthRate >= 0 ? '+' : ''}${customerGrowthRate}% ${growthSubtitle}`,
       trend: customerGrowthRate >= 0 ? 'up' : 'down',
       icon: Users,
       route: '/customers?stage=CUSTOMER',
@@ -108,9 +124,9 @@ export function KpiCardsRow({ summary, isLoading = false }) {
       color: '#3B82F6',
     },
     {
-      title: 'Won This Month',
+      title: wonTitle,
       value: formatCurrency(wonValueThisMonth),
-      subtitle: 'Closed won revenue',
+      subtitle: `${rangeLabel} closed won`,
       trend: wonValueThisMonth > 0 ? 'up' : 'neutral',
       icon: Trophy,
       route: '/leads?status=WON',

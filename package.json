@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "prettier": "^3.5.3"
+    "pptxgenjs": "^4.0.1",
+    "prettier": "^3.5.3",
+    "puppeteer-core": "^25.17.0"
   }
 }

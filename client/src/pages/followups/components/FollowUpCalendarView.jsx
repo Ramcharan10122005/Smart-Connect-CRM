@@ -1,8 +1,13 @@
 import { useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import classicThemePlugin from '@fullcalendar/react/themes/classic';
+import dayGridPlugin from '@fullcalendar/react/daygrid';
+import timeGridPlugin from '@fullcalendar/react/timegrid';
+import interactionPlugin from '@fullcalendar/react/interaction';
+
+import '@fullcalendar/react/skeleton.css';
+import '@fullcalendar/react/themes/classic/theme.css';
+import '@fullcalendar/react/themes/classic/palette.css';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -92,7 +97,7 @@ export function FollowUpCalendarView({ followUps = [] }) {
       <div className="fc-theme-smartconnect">
         <FullCalendar
           ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, classicThemePlugin]}
           initialView="dayGridMonth"
           headerToolbar={{
             left: 'prev,next today',

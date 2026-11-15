@@ -15,6 +15,7 @@ function getInitialSidebar() {
 function applyThemeToDOM(theme) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
+  root.setAttribute('data-color-scheme', theme);
   if (theme === 'dark') {
     root.classList.add('dark');
   } else {

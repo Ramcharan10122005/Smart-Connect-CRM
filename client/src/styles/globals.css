@@ -111,6 +111,35 @@
 }
 
 /* FullCalendar styling theme adaptation */
+:root {
+  --fc-classic-background: hsl(var(--card));
+  --fc-classic-foreground: hsl(var(--foreground));
+  --fc-classic-border: hsl(var(--border));
+  --fc-classic-button: hsl(var(--card));
+  --fc-classic-button-border: hsl(var(--border));
+  --fc-classic-button-foreground: hsl(var(--foreground));
+  --fc-classic-button-strong: hsl(var(--muted));
+  --fc-classic-button-strong-border: hsl(var(--border));
+  --fc-classic-today: hsl(var(--primary) / 0.1);
+  --fc-classic-highlight: hsl(var(--primary) / 0.15);
+}
+
+.dark, [data-color-scheme="dark"] {
+  --fc-classic-background: hsl(var(--card));
+  --fc-classic-foreground: hsl(var(--foreground));
+  --fc-classic-border: hsl(var(--border));
+  --fc-classic-faint: hsl(var(--muted) / 0.3);
+  --fc-classic-muted: hsl(var(--muted) / 0.5);
+  --fc-classic-strong: hsl(var(--muted) / 0.7);
+  --fc-classic-button: hsl(var(--card));
+  --fc-classic-button-border: hsl(var(--border));
+  --fc-classic-button-foreground: hsl(var(--foreground));
+  --fc-classic-button-strong: hsl(var(--muted));
+  --fc-classic-button-strong-border: hsl(var(--border));
+  --fc-classic-today: hsl(var(--primary) / 0.15);
+  --fc-classic-highlight: hsl(var(--primary) / 0.2);
+}
+
 .fc {
   --fc-border-color: hsl(var(--border));
   --fc-page-bg-color: transparent;

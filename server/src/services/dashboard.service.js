@@ -15,11 +15,19 @@ function resolveScopedOwnerId(user, requestedOwnerId) {
 
 export async function getSummary(query, user) {
   const targetOwnerId = resolveScopedOwnerId(user, query.ownerId);
+  const range = query.range || '30d';
 
   const now = new Date();
-  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+  // Period window resolution (7d, 30d, 90d, 12m)
+  let periodDays = 30;
+  if (range === '7d') periodDays = 7;
+  else if (range === '90d') periodDays = 90;
+  else if (range === '12m') periodDays = 365;
+
+  const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+  const prevPeriodStart = new Date(now.getTime() - 2 * periodDays * 24 * 60 * 60 * 1000);
+  const prevPeriodEnd = periodStart;
 
   const contactBaseWhere = {
     deletedAt: null,
@@ -43,6 +51,8 @@ export async function getSummary(query, user) {
     openLeads,
     openLeadsWithStage,
     wonLeadsThisMonth,
+    periodWonLeads,
+    periodLostLeads,
     totalWonLeads,
     totalLostLeads,
     overdueFollowUps,
@@ -50,19 +60,19 @@ export async function getSummary(query, user) {
     // Total customers
     prisma.contact.count({ where: contactBaseWhere }),
 
-    // New customers this month
+    // New customers in period
     prisma.contact.count({
       where: {
         ...contactBaseWhere,
-        createdAt: { gte: startOfThisMonth },
+        createdAt: { gte: periodStart },
       },
     }),
 
-    // New customers last month
+    // New customers in previous period of equal length
     prisma.contact.count({
       where: {
         ...contactBaseWhere,
-        createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+        createdAt: { gte: prevPeriodStart, lte: prevPeriodEnd },
       },
     }),
 
@@ -86,14 +96,32 @@ export async function getSummary(query, user) {
       },
     }),
 
-    // Leads won this month
+    // Leads won in period
     prisma.lead.findMany({
       where: {
         ...leadBaseWhere,
         status: 'WON',
-        updatedAt: { gte: startOfThisMonth },
+        updatedAt: { gte: periodStart },
       },
       select: { value: true },
+    }),
+
+    // Won leads in period count
+    prisma.lead.count({
+      where: {
+        ...leadBaseWhere,
+        status: 'WON',
+        updatedAt: { gte: periodStart },
+      },
+    }),
+
+    // Lost leads in period count
+    prisma.lead.count({
+      where: {
+        ...leadBaseWhere,
+        status: 'LOST',
+        updatedAt: { gte: periodStart },
+      },
     }),
 
     // Lifetime won leads count
@@ -122,7 +150,7 @@ export async function getSummary(query, user) {
     }),
   ]);
 
-  // % change vs last month
+  // % change vs prior period
   let customerGrowthRate = 0;
   if (newCustomersLastMonth === 0) {
     customerGrowthRate = newCustomersThisMonth > 0 ? 100 : 0;
@@ -138,15 +166,21 @@ export async function getSummary(query, user) {
     return acc + (Number(lead.value) * prob) / 100;
   }, 0);
 
-  // Won value this month
+  // Won value in period
   const wonValueThisMonth = wonLeadsThisMonth.reduce(
     (acc, lead) => acc + Number(lead.value || 0),
     0
   );
 
   // Lead win rate = (won / (won + lost)) * 100
-  const closedLeads = totalWonLeads + totalLostLeads;
-  const leadWinRate = closedLeads > 0 ? Math.round((totalWonLeads / closedLeads) * 1000) / 10 : 0;
+  const periodClosedLeads = periodWonLeads + periodLostLeads;
+  const totalClosedLeads = totalWonLeads + totalLostLeads;
+  let leadWinRate = 0;
+  if (periodClosedLeads > 0) {
+    leadWinRate = Math.round((periodWonLeads / periodClosedLeads) * 1000) / 10;
+  } else if (totalClosedLeads > 0) {
+    leadWinRate = Math.round((totalWonLeads / totalClosedLeads) * 1000) / 10;
+  }
 
   return {
     totalCustomers,
@@ -158,12 +192,25 @@ export async function getSummary(query, user) {
     wonValueThisMonth: Math.round(wonValueThisMonth * 100) / 100,
     leadWinRate,
     overdueFollowUps,
+    range,
   };
 }
 
 export async function getCharts(query, user) {
   const targetOwnerId = resolveScopedOwnerId(user, query.ownerId);
+  const range = query.range || '12m';
   const now = new Date();
+
+  let rangeDays = 365;
+  if (range === '7d') rangeDays = 7;
+  else if (range === '30d') rangeDays = 30;
+  else if (range === '90d') rangeDays = 90;
+
+  // For pipeline and sources: if specific range (7d, 30d, 90d) is requested, filter leads created in period
+  const periodStart =
+    query.range && query.range !== '12m'
+      ? new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000)
+      : null;
 
   const leadBaseWhere = {
     deletedAt: null,
@@ -181,7 +228,10 @@ export async function getCharts(query, user) {
 
   const leadsInStages = await prisma.lead.groupBy({
     by: ['stageId'],
-    where: leadBaseWhere,
+    where: {
+      ...leadBaseWhere,
+      ...(periodStart ? { createdAt: { gte: periodStart } } : {}),
+    },
     _count: { id: true },
     _sum: { value: true },
   });
@@ -208,7 +258,10 @@ export async function getCharts(query, user) {
   const sources = await prisma.leadSource.findMany();
   const leadsInSources = await prisma.lead.groupBy({
     by: ['sourceId'],
-    where: leadBaseWhere,
+    where: {
+      ...leadBaseWhere,
+      ...(periodStart ? { createdAt: { gte: periodStart } } : {}),
+    },
     _count: { id: true },
     _sum: { value: true },
   });
@@ -230,47 +283,151 @@ export async function getCharts(query, user) {
     value: sourceMap.get(src.id)?.value || 0,
   }));
 
-  // 3. Monthly Won Revenue for Last 12 Months
-  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-  const wonLeadsLast12Months = await prisma.lead.findMany({
-    where: {
-      ...leadBaseWhere,
-      status: 'WON',
-      updatedAt: { gte: twelveMonthsAgo },
-    },
-    select: {
-      value: true,
-      updatedAt: true,
-    },
-  });
-
+  // 3. Won Revenue Velocity
   const monthlyWonRevenue = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-    let revenue = 0;
-    let count = 0;
-
-    for (const l of wonLeadsLast12Months) {
-      const lDate = new Date(l.updatedAt);
-      const lKey = `${lDate.getFullYear()}-${String(lDate.getMonth() + 1).padStart(2, '0')}`;
-      if (lKey === key) {
-        revenue += Number(l.value || 0);
-        count++;
-      }
-    }
-
-    monthlyWonRevenue.push({
-      month: key,
-      label,
-      wonRevenue: Math.round(revenue * 100) / 100,
-      count,
+  if (range === '7d') {
+    const periodStartDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const wonLeadsPeriod = await prisma.lead.findMany({
+      where: {
+        ...leadBaseWhere,
+        status: 'WON',
+        updatedAt: { gte: periodStartDate },
+      },
+      select: { value: true, updatedAt: true },
     });
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      let revenue = 0;
+      let count = 0;
+
+      for (const l of wonLeadsPeriod) {
+        if (new Date(l.updatedAt).toISOString().slice(0, 10) === key) {
+          revenue += Number(l.value || 0);
+          count++;
+        }
+      }
+
+      monthlyWonRevenue.push({
+        month: key,
+        label,
+        wonRevenue: Math.round(revenue * 100) / 100,
+        count,
+      });
+    }
+  } else if (range === '30d') {
+    const periodStartDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const wonLeadsPeriod = await prisma.lead.findMany({
+      where: {
+        ...leadBaseWhere,
+        status: 'WON',
+        updatedAt: { gte: periodStartDate },
+      },
+      select: { value: true, updatedAt: true },
+    });
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      let revenue = 0;
+      let count = 0;
+
+      for (const l of wonLeadsPeriod) {
+        if (new Date(l.updatedAt).toISOString().slice(0, 10) === key) {
+          revenue += Number(l.value || 0);
+          count++;
+        }
+      }
+
+      monthlyWonRevenue.push({
+        month: key,
+        label,
+        wonRevenue: Math.round(revenue * 100) / 100,
+        count,
+      });
+    }
+  } else if (range === '90d') {
+    const periodStartDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const wonLeadsPeriod = await prisma.lead.findMany({
+      where: {
+        ...leadBaseWhere,
+        status: 'WON',
+        updatedAt: { gte: periodStartDate },
+      },
+      select: { value: true, updatedAt: true },
+    });
+
+    for (let w = 11; w >= 0; w--) {
+      const startOfWeek = new Date(now.getTime() - (w + 1) * 7 * 86400000);
+      const endOfWeek = new Date(now.getTime() - w * 7 * 86400000);
+      const label = startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      let revenue = 0;
+      let count = 0;
+
+      for (const l of wonLeadsPeriod) {
+        const t = new Date(l.updatedAt).getTime();
+        if (t >= startOfWeek.getTime() && t < endOfWeek.getTime()) {
+          revenue += Number(l.value || 0);
+          count++;
+        }
+      }
+
+      monthlyWonRevenue.push({
+        month: startOfWeek.toISOString().slice(0, 10),
+        label: `Wk of ${label}`,
+        wonRevenue: Math.round(revenue * 100) / 100,
+        count,
+      });
+    }
+  } else {
+    // 12M or default (12 monthly buckets)
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    const wonLeadsLast12Months = await prisma.lead.findMany({
+      where: {
+        ...leadBaseWhere,
+        status: 'WON',
+        updatedAt: { gte: twelveMonthsAgo },
+      },
+      select: {
+        value: true,
+        updatedAt: true,
+      },
+    });
+
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+      let revenue = 0;
+      let count = 0;
+
+      for (const l of wonLeadsLast12Months) {
+        const lDate = new Date(l.updatedAt);
+        const lKey = `${lDate.getFullYear()}-${String(lDate.getMonth() + 1).padStart(2, '0')}`;
+        if (lKey === key) {
+          revenue += Number(l.value || 0);
+          count++;
+        }
+      }
+
+      monthlyWonRevenue.push({
+        month: key,
+        label,
+        wonRevenue: Math.round(revenue * 100) / 100,
+        count,
+      });
+    }
   }
 
-  // 4. New Leads Per Week for Last 12 Weeks
+  // 4. New Leads Per Week for Last 12 Weeks (kept 12 weeks for pipeline velocity stability)
   const twelveWeeksAgo = new Date(now.getTime() - 12 * 7 * 24 * 60 * 60 * 1000);
   const recentLeads = await prisma.lead.findMany({
     where: {
@@ -308,12 +465,12 @@ export async function getCharts(query, user) {
     });
   }
 
-  // 5. Activities Per Type for Last 8 Weeks
-  const eightWeeksAgo = new Date(now.getTime() - 8 * 7 * 24 * 60 * 60 * 1000);
+  // 5. Activities Per Type (dynamically scoped to range)
+  const activitySince = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
   const recentActivities = await prisma.activity.findMany({
     where: {
       ...activityBaseWhere,
-      occurredAt: { gte: eightWeeksAgo },
+      occurredAt: { gte: activitySince },
     },
     select: {
       type: true,
@@ -349,6 +506,7 @@ export async function getCharts(query, user) {
     monthlyWonRevenue,
     newLeadsPerWeek,
     activitiesPerType,
+    range,
   };
 }
 

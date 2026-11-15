@@ -12,7 +12,13 @@ import { useUIStore } from '@/stores/uiStore';
 import { formatCurrency } from '@/lib/utils';
 import { WidgetCard } from './WidgetCard';
 
-export function RevenueChart({ data = [], isLoading = false, isError = false, onRetry }) {
+export function RevenueChart({
+  data = [],
+  range = '12m',
+  isLoading = false,
+  isError = false,
+  onRetry,
+}) {
   const { theme } = useUIStore();
   const isDark = theme === 'dark';
 
@@ -29,10 +35,18 @@ export function RevenueChart({ data = [], isLoading = false, isError = false, on
     return chartData.reduce((acc, curr) => acc + curr.revenue, 0);
   }, [chartData]);
 
+  const rangeLabels = {
+    '7d': '7-day',
+    '30d': '30-day',
+    '90d': '90-day',
+    '12m': '12-month',
+  };
+  const rangeText = rangeLabels[range] || 'Period';
+
   return (
     <WidgetCard
       title="Won Revenue Velocity"
-      description={`12-month closed won volume: ${formatCurrency(totalWonRevenue)}`}
+      description={`${rangeText} closed won volume: ${formatCurrency(totalWonRevenue)}`}
       isLoading={isLoading}
       isError={isError}
       onRetry={onRetry}

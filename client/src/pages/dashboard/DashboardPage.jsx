@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const getParams = () => {
     const params = new URLSearchParams();
     if (selectedRepId) params.append('ownerId', selectedRepId);
+    if (dateRange) params.append('range', dateRange);
     return params.toString() ? `?${params.toString()}` : '';
   };
 
@@ -32,7 +33,10 @@ export default function DashboardPage() {
     isError: summaryError,
     refetch: refetchSummary,
   } = useQuery({
-    queryKey: queryKeys.dashboard.summary(selectedRepId ? { ownerId: selectedRepId } : {}),
+    queryKey: queryKeys.dashboard.summary({
+      ...(selectedRepId ? { ownerId: selectedRepId } : {}),
+      range: dateRange,
+    }),
     queryFn: async () => {
       const res = await api.get(`/dashboard/summary${getParams()}`);
       return res.data?.data;
@@ -47,7 +51,10 @@ export default function DashboardPage() {
     isError: chartsError,
     refetch: refetchCharts,
   } = useQuery({
-    queryKey: queryKeys.dashboard.charts(selectedRepId ? { ownerId: selectedRepId } : {}),
+    queryKey: queryKeys.dashboard.charts({
+      ...(selectedRepId ? { ownerId: selectedRepId } : {}),
+      range: dateRange,
+    }),
     queryFn: async () => {
       const res = await api.get(`/dashboard/charts${getParams()}`);
       return res.data?.data;
@@ -61,7 +68,7 @@ export default function DashboardPage() {
     isError: upcomingError,
     refetch: refetchUpcoming,
   } = useQuery({
-    queryKey: ['dashboard', 'upcoming', selectedRepId],
+    queryKey: ['dashboard', 'upcoming', selectedRepId, dateRange],
     queryFn: async () => {
       const res = await api.get(`/dashboard/upcoming${getParams()}`);
       return res.data?.data;
@@ -108,6 +115,7 @@ export default function DashboardPage() {
       {/* 2. KPI Cards Row (6 metrics with sparklines and growth rates) */}
       <KpiCardsRow
         summary={summaryData}
+        range={dateRange}
         isLoading={summaryLoading}
         isError={summaryError}
         onRetry={refetchSummary}
@@ -117,6 +125,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueChart
           data={chartsData?.monthlyWonRevenue}
+          range={dateRange}
           isLoading={chartsLoading}
           isError={chartsError}
           onRetry={refetchCharts}
